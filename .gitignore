@@ -14,6 +14,3 @@
 /log/*.log
 /tmp
 
-# Ignore vi backups
-*~
-*.swp
