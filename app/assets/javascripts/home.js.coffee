@@ -3,7 +3,12 @@
 # You can use CoffeeScript in this file: http://jashkenas.github.com/coffee-script/
 
 $ ->
-    $('#window-width-slider').slider()
+    $('#window-width-slider').slider
+        min : 0
+        max : 1
+        step : 0.01
+        values : [0.25, 0.75]
+        range : true
 
     if false
         $.ajax '/binary', 
@@ -32,24 +37,6 @@ $ ->
 
         this.setupShader = ->
             shaderProgram = this.shaderProgram
-            lighting = false
-            this.uniform1i 'uUseLighting', lighting
-            phong = true
-            this.uniform1i('uPhong', phong)
-            shiny = 8.0
-            this.uniform1f("uMaterialShininess", shiny)
-            
-            this.uniform1i("uShowSpecularHighlights", 1)
-            this.uniform3f("uAmbientColor", 0.5, 0.5, 0.5)
-            this.uniform3f('uPintLightingLocation', 1.0, 10.0, 4.0)
-            this.uniform3f('uPointLightingSpecularColor', 1.0, 1.0, 1.0)
-            this.uniform3f('uPointLightingDiffuseColor', 0.5, 0.5, 0.5)
-            
-            this.enableVertexAttribArray("aUV", false)
-            this.enableVertexAttribArray("aVertexPostion")
-            this.enableVertexAttribArray("aColor", false)
-            this.enableVertexAttribArray("aVertexNormal", true)
-            
             this.setUniformMatrices('uMVMatrix', 'uPMatrix', 'uNMatrix')
 
         this.setupShader()
@@ -72,13 +59,6 @@ $ ->
             0, 0, 1,
             0, 0, 1
         ]
-        texsz = 128
-#         uvs = [
-#             0, texsz-1,
-#             texsz-1, texsz-1,
-#             0, 0,
-#             texsz-1, 0
-#         ]
         uvs = [
             0, 0,
             1, 0,
@@ -115,7 +95,7 @@ $ ->
     # make a texture
     gl = widget.gl
     texbits = []
-    texsz = 128
+    texsz = 256
     texsz2 = texsz/2
     for i in [0...texsz]
         f1 = (i - texsz2)/texsz2

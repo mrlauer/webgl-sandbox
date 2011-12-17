@@ -32,3 +32,18 @@ $slidersz: $controlsz * 0.75;
     width: $webglsz;
     height: $webglsz;
 }
+
+$slider_height : 6px;
+$slider_handle_offset : 4px;
+$slider_handle_width : 6px;
+
+.ui-slider-horizontal {
+    height: $slider_height;
+}
+
+.ui-slider .ui-slider-handle {
+    top: -$slider_handle_offset;
+    height: $slider_height + 2 * $slider_handle_offset - 2;
+    width: $slider_handle_width;
+    margin-left: $slider_handle_width * -0.5;
+}
