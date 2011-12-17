@@ -72,10 +72,29 @@ $ ->
             0, 0, 1,
             0, 0, 1
         ]
+        texsz = 128
+#         uvs = [
+#             0, texsz-1,
+#             texsz-1, texsz-1,
+#             0, 0,
+#             texsz-1, 0
+#         ]
+        uvs = [
+            0, 0,
+            1, 0,
+            0, 1,
+            1, 1
+        ]
         this.setFloatBufferData this.positionBuffer, vertices, 3
         this.setFloatAttribPointer 'aVertexPosition', this.positionBuffer
         this.setFloatBufferData this.normalBuffer, vertices, 3
         this.setFloatAttribPointer 'aVertexNormal', this.normalBuffer
+        this.setFloatBufferData this.uvBuffer, uvs, 2
+        this.setFloatAttribPointer 'aUV', this.uvBuffer
+
+        this.uniform1i 'uTexture', 0
+        this.gl.activeTexture this.gl.TEXTURE0
+        gl.bindTexture(gl.TEXTURE_2D, this.texture)
         gl.drawArrays gl.TRIANGLE_STRIP, 0, this.positionBuffer.numItems
 
     widget = null
@@ -84,11 +103,38 @@ $ ->
             widget = this
             this.initProgram()
             this.positionBuffer = this.gl.createBuffer()
+            this.normalBuffer = this.gl.createBuffer()
+            this.uvBuffer = this.gl.createBuffer()
             this.enableVertexAttribArray("aUV", false)
             this.enableVertexAttribArray("aVertexPosition")
             this.gl.clearColor 0, 0, 0, 1
             this.gl.enable this.gl.DEPTH_TEST
-            
+
         draw : drawScene
+
+    # make a texture
+    gl = widget.gl
+    texbits = []
+    texsz = 128
+    texsz2 = texsz/2
+    for i in [0...texsz]
+        f1 = (i - texsz2)/texsz2
+        for j in [0...texsz]
+            f2 = (j-texsz2)/texsz2
+            z = Math.sqrt(1.0 - f1*f1 - f2*f2)
+            z *= 255
+            if z < 0
+                z = 0
+            if z > 255
+                z = 255
+            texbits.push z
+    pixels = new Uint8Array(texbits)
+    texture = gl.createTexture()
+    gl.bindTexture gl.TEXTURE_2D, texture
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, texsz, texsz, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, pixels)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+
+    widget.texture = texture
 
     widget.draw()

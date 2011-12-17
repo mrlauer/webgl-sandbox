@@ -1,0 +1,17 @@
+<script id="shader-fs" type="x-shader/x-fragment">
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    varying vec4 vPosition;
+    varying vec2 vUV;
+    uniform sampler2D uTexture;
+ 
+    void main(void) {
+        float alpha = 1.0;
+        vec4 light = texture2D(uTexture, vUV);
+ 
+        gl_FragColor = vec4(light.rgb, alpha);
+    }
+</script>
+
