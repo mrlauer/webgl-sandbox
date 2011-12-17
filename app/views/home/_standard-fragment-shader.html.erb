@@ -1,0 +1,89 @@
+<script id="shader-fs" type="x-shader/x-fragment">
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    varying vec3 vTransformedNormal;
+	varying vec4 vColor;
+    varying vec4 vPosition;
+    varying vec2 vUV;
+ 	varying vec4 vEmission;
+ 	varying vec4 vDiffuse;
+ 	varying vec4 vAmbient;
+ 	varying vec4 vSpecular;
+ 
+    uniform float uMaterialShininess;
+ 
+    uniform bool uShowSpecularHighlights;
+    uniform bool uUseLighting;
+    uniform bool uPicking;
+    uniform vec4 uPickingIndex;
+ 
+    uniform vec3 uAmbientColor;
+    
+    uniform sampler2D uEmissionTexture;
+    uniform sampler2D uAmbientTexture;
+    uniform sampler2D uDiffuseTexture;
+    uniform sampler2D uSpecularTexture;
+    uniform bool uUseEmissionTexture;
+    uniform bool uUseAmbientTexture;
+    uniform bool uUseDiffuseTexture;
+    uniform bool uUseSpecularTexture;
+ 
+    uniform vec3 uPointLightingLocation;
+    uniform vec3 uPointLightingSpecularColor;
+    uniform vec3 uPointLightingDiffuseColor;
+ 
+ 	uniform bool uUseTexture;
+    uniform sampler2D uSampler;
+	uniform bool uPhong;
+ 
+    vec4 getColor(vec4 color, sampler2D texture, bool useTexture) {
+    	if(useTexture) {
+    		return texture2D(texture, vec2(vUV.s, vUV.t));
+    	} else {
+    		return color;
+    	}
+    }
+ 
+    void main(void) {
+		if(uPicking)
+		{
+			gl_FragColor = uPickingIndex;
+			return;
+		}
+        vec3 light;
+        float alpha;
+        if (!uUseLighting) {
+            light = vColor.rgb;
+            alpha = vColor.a;
+        } else {
+        	vec4 emission = getColor(vEmission, uEmissionTexture, uUseEmissionTexture);
+        	vec4 diffuse = getColor(vDiffuse, uDiffuseTexture, uUseDiffuseTexture);
+        	vec4 ambient = getColor(vAmbient, uAmbientTexture, uUseAmbientTexture);
+        	vec4 specular = getColor(vSpecular, uSpecularTexture, uUseSpecularTexture);
+        	
+        	alpha = max(vColor.a, diffuse.a);
+        	
+            vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
+            vec3 normal = uPhong ? normalize(vTransformedNormal) : vTransformedNormal;
+ 
+            float specularLightWeighting = 0.0;
+            if (uShowSpecularHighlights) {
+                vec3 eyeDirection = normalize(-vPosition.xyz);
+                vec3 reflectionDirection = reflect(-lightDirection, normal);
+ 
+                specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
+            }
+ 
+            float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
+            light =
+            	emission.rgb + 
+            	uAmbientColor * (ambient + vColor).rgb +
+                + uPointLightingSpecularColor * specularLightWeighting * (specular + vColor).rgb 
+                + uPointLightingDiffuseColor * diffuseLightWeighting * (diffuse + vColor).rgb;
+        }
+ 
+        gl_FragColor = vec4(light.rgb, alpha);
+    }
+</script>

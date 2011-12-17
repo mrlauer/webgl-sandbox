@@ -1,0 +1,20 @@
+// Place all the styles related to the home controller here.
+// They will automatically be included in application.css.
+// You can use Sass (SCSS) here: http://sass-lang.com/
+
+$webglsz: 256px;
+$controlsz: 256px;
+
+#controls {
+    float: left;
+    width: $controlsz;
+};
+
+#main {
+    width: $webglsz;
+    height: $webglsz;
+    margin-left: $controlsz;
+    border-color: black;
+    border-style: solid;
+    border-width: thin;
+};

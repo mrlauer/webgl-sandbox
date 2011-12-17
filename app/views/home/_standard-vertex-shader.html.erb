@@ -1,0 +1,35 @@
+<script id="shader-vs" type="x-shader/x-vertex">    
+	attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
+	attribute vec4 aColor;
+	attribute vec2 aUV;
+	attribute vec4 aEmission;
+	attribute vec4 aDiffuse;
+	attribute vec4 aAmbient;
+	attribute vec4 aSpecular;
+ 
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+ 
+    varying vec3 vTransformedNormal;
+    varying vec4 vPosition;
+ 	varying vec2 vUV;
+ 	varying vec4 vColor;
+ 	varying vec4 vEmission;
+ 	varying vec4 vDiffuse;
+ 	varying vec4 vAmbient;
+ 	varying vec4 vSpecular;
+ 
+    void main(void) {
+        vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+        gl_Position = uPMatrix * vPosition;
+		vColor = aColor;
+		vEmission = aEmission;
+		vDiffuse = aDiffuse;
+		vAmbient = aAmbient;
+		vSpecular = aSpecular;
+        vTransformedNormal = uNMatrix * aVertexNormal;
+        vUV = aUV;
+     }
+</script>
