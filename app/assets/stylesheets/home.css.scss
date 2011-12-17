@@ -19,6 +19,7 @@ $slidersz: $controlsz * 0.75;
 }
 
 #main {
+    display: inline-block;
     width: $webglsz;
     height: $webglsz;
     margin-left: $controlsz;
@@ -26,3 +27,8 @@ $slidersz: $controlsz * 0.75;
     border-style: solid;
     border-width: thin;
 };
+
+#canvas {
+    width: $webglsz;
+    height: $webglsz;
+}
