@@ -16,3 +16,4 @@
 
 # Ignore vi backups
 *~
+*.swp

@@ -3,4 +3,4 @@
 # You can use CoffeeScript in this file: http://jashkenas.github.com/coffee-script/
 
 $ ->
-     $('#slider').slider()
+     $('#window-width-slider').slider()

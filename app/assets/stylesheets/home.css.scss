@@ -4,11 +4,19 @@
 
 $webglsz: 256px;
 $controlsz: 256px;
+$controlpadding: 16px;
+$slidersz: $controlsz * 0.75;
 
 #controls {
     float: left;
     width: $controlsz;
+    padding-left: $controlpadding;
+    padding-right: $controlpadding;
 };
+
+#window-width-slider {
+    width: $slidersz;
+}
 
 #main {
     width: $webglsz;
