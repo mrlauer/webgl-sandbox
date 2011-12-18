@@ -3,13 +3,6 @@
 # You can use CoffeeScript in this file: http://jashkenas.github.com/coffee-script/
 
 $ ->
-    $('#window-width-slider').slider
-        min : 0
-        max : 1
-        step : 0.01
-        values : [0.25, 0.75]
-        range : true
-
     if false
         $.ajax '/binary', 
             type: 'GET',
@@ -72,6 +65,9 @@ $ ->
         this.setFloatBufferData this.uvBuffer, uvs, 2
         this.setFloatAttribPointer 'aUV', this.uvBuffer
 
+        this.uniform1f('uMin', this.minrange)
+        this.uniform1f('uMax', this.maxrange)
+
         this.uniform1i 'uTexture', 0
         this.gl.activeTexture this.gl.TEXTURE0
         gl.bindTexture(gl.TEXTURE_2D, this.texture)
@@ -89,6 +85,8 @@ $ ->
             this.enableVertexAttribArray("aVertexPosition")
             this.gl.clearColor 0, 0, 0, 1
             this.gl.enable this.gl.DEPTH_TEST
+            this.minrange = 0.0
+            this.maxrange = 1.0
 
         draw : drawScene
 
@@ -116,5 +114,16 @@ $ ->
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 
     widget.texture = texture
+
+    $('#window-width-slider').slider
+        min : 0
+        max : 1
+        step : 0.01
+        values : [0, 1]
+        range : true
+        slide : (event, ui) ->
+            widget.minrange = $(this).slider('values', 0)
+            widget.maxrange = $(this).slider('values', 1)
+            widget.draw()
 
     widget.draw()

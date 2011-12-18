@@ -6,12 +6,21 @@
     varying vec4 vPosition;
     varying vec2 vUV;
     uniform sampler2D uTexture;
+
+    uniform int uMaxLimit;
+    uniform float uMax;
+    uniform float uMin;
  
     void main(void) {
         float alpha = 1.0;
-        vec4 light = texture2D(uTexture, vUV);
+        vec3 light = texture2D(uTexture, vUV).rbg;
+
+        vec3 minrange = vec3(uMin, uMin, uMin);
+        vec3 maxrange = vec3(uMax, uMax, uMax);
+        vec3 fac = maxrange - minrange;
+        light = (light - minrange) / fac;
  
-        gl_FragColor = vec4(light.rgb, alpha);
+        gl_FragColor = vec4(light, alpha);
     }
 </script>
 
