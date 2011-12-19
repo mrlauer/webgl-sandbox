@@ -4,7 +4,7 @@
 
 $ ->
     if false
-        $.ajax '/binary', 
+        $.ajax '/binary',
             type: 'GET',
             success: (data) ->
                 # unpack the data; it's 4-byte big-endian
