@@ -15,6 +15,7 @@ $ ->
                     for j in [1...4]
                         d = d * 256 + data.charCodeAt(i*4+j)
                     $('body').append d + '<br/>'
+
        
     # gl stuff
     drawScene = () ->
@@ -119,9 +120,42 @@ $ ->
             f2 = (j-texsz2)/texsz2
             z = Math.sqrt(1.0 - f1*f1 - f2*f2)
             texbits.push z
-    texture = makeTexture2d gl, 1, texsz, texsz, texbits
+#     texture = makeTexture2d gl, 1, texsz, texsz, texbits
+# 
+#     widget.texture = texture
 
-    widget.texture = texture
+    unpackInt = (string, idx) ->
+        return string.charCodeAt(idx) * 256 + string.charCodeAt(idx+1)
+
+    unpackTextureData = (data) ->
+        len = data.length
+        bits = unpackInt data, 0
+        width = unpackInt data, 2
+        height = unpackInt data, 4
+        sz = width * height
+        pixels = new Uint8Array sz
+        for i in [0 ... sz]
+            pixels[i] = unpackInt data, (i * 2 + 6)
+        return { bits : bits, width : width, height : height, pixels : pixels }
+
+    makeTexture2dFromData = (widget, textureData) ->
+        gl = widget.gl
+        texture = gl.createTexture()
+        gl.bindTexture gl.TEXTURE_2D, texture
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, textureData.width, textureData.height, 0,
+            gl.LUMINANCE, gl.UNSIGNED_BYTE, textureData.pixels)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+        return texture
+
+    # get data
+    $.ajax '/binary2d',
+        type: 'GET',
+        success: (data) ->
+            pixelData = unpackTextureData (base64.decode data)
+            texture = makeTexture2dFromData widget, pixelData
+            widget.texture = texture
+            widget.draw()
 
     $('#window-width-slider').slider
         min : 0
@@ -134,4 +168,4 @@ $ ->
             widget.maxrange = $(this).slider('values', 1)
             widget.draw()
 
-    widget.draw()
+#     widget.draw()

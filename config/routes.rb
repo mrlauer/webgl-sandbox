@@ -52,7 +52,7 @@ Image::Application.routes.draw do
   # just remember to delete public/index.html.
   root :to => 'home#index'
 
-  match "/binary" => "home#binary"
+  match "/binary2d" => "home#binary2d"
 
   # See how all your routes lay out with "rake routes"
 
