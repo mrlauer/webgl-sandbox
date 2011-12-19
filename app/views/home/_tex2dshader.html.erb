@@ -1,15 +1,8 @@
-<% if (defined? is3d) and is3d %>
-    <% texcoord = 'vec3' %>
-    <% sampler = 'sampler3D' %>
-    <% texturefn = 'texture3D' %>
-<% else %>
-    <% texcoord = 'vec2' %>
-    <% sampler = 'sampler2D' %>
-    <% texturefn = 'texture2D' %>
-<% end %>
-<% if not defined? shaderName %>
-    <% shaderName = "shader-fs" %>
-<% end %>
+<% dimension ||= 2 %>
+<% texcoord = "vec#{dimension}" %>
+<% sampler = "sampler#{dimension == 2 ? '2D' : 'Cube' }" %>
+<% texturefn = "texture#{dimension == 2 ? '2D' : 'Cube' }" %>
+<% shaderName ||= "shader-fs" %>
 <script id="<%= shaderName %>" type="x-shader/x-fragment">
     #ifdef GL_ES
     precision highp float;
