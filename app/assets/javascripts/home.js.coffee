@@ -90,6 +90,24 @@ $ ->
 
         draw : drawScene
 
+    # texture-making functions
+    makeTexture2d = (gl, maxval, height, width, data) ->
+        idx = 0
+        pixeldata = new Array(height * width)
+        for i in [0 ... height]
+            for j in [0 ... width]
+                d = data[idx]
+                pd = Math.round(d * 255 / maxval)
+                pixeldata[idx] = pd
+                idx += 1
+        pixels = new Uint8Array(pixeldata)
+        texture = gl.createTexture()
+        gl.bindTexture gl.TEXTURE_2D, texture
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, texsz, texsz, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, pixels)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+        return texture
+
     # make a texture
     gl = widget.gl
     texbits = []
@@ -100,18 +118,8 @@ $ ->
         for j in [0...texsz]
             f2 = (j-texsz2)/texsz2
             z = Math.sqrt(1.0 - f1*f1 - f2*f2)
-            z *= 255
-            if z < 0
-                z = 0
-            if z > 255
-                z = 255
             texbits.push z
-    pixels = new Uint8Array(texbits)
-    texture = gl.createTexture()
-    gl.bindTexture gl.TEXTURE_2D, texture
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, texsz, texsz, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, pixels)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+    texture = makeTexture2d gl, 1, texsz, texsz, texbits
 
     widget.texture = texture
 
