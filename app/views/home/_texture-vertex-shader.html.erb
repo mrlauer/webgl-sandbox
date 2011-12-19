@@ -1,0 +1,21 @@
+<% dimension ||= 2 %>
+<% texcoord = "vec#{dimension}" %>
+<% shaderName ||= "shader-vs" %>
+<script id="<%= shaderName %>" type="x-shader/x-vertex">    
+    attribute vec3 aVertexPosition;
+    attribute <%= texcoord %> aUV;
+ 
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+ 
+    varying vec4 vPosition;
+    varying <%= texcoord %> vUV;
+ 
+    void main(void) {
+        vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+        gl_Position = uPMatrix * vPosition;
+        vUV = aUV;
+     }
+</script>
+
