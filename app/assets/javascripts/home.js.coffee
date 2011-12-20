@@ -170,6 +170,7 @@ $ ->
 
     class SliceObject
         constructor : (@textureObj) ->
+            @level = 0.5
 
         draw : (widget) ->
             gl = widget.gl
@@ -179,11 +180,13 @@ $ ->
                 right : 1
                 top : 1
                 bottom : -1
+
+            z = -1 + 2 * @level 
             vertices = [
-                bds.left, bds.bottom, 0,
-                bds.right, bds.bottom, 0,
-                bds.left, bds.top, 0,
-                bds.right, bds.top, 0,
+                bds.left, bds.bottom, z,
+                bds.right, bds.bottom, z,
+                bds.left, bds.top, z,
+                bds.right, bds.top, z,
             ]
             normals = [
                 0, 0, 1,
@@ -191,7 +194,7 @@ $ ->
                 0, 0, 1,
                 0, 0, 1
             ]
-            [u0, v0, u1, v1] = texture.getUVOffsets Math.floor(texture.depth / 2)
+            [u0, v0, u1, v1] = texture.getUVOffsets Math.round(@level * (texture.depth-1))
             uvs = [
                 u0, v0
                 u1, v0,
@@ -235,5 +238,15 @@ $ ->
             widget.minrange = $(this).slider('values', 0)
             widget.maxrange = $(this).slider('values', 1)
             widget.draw()
+
+    $('#z-depth-slider').slider
+        min : 0
+        max : 1
+        step : 1/128 
+        value : 0.5
+        slide : (event, ui) ->
+            widget.slice.level = ui.value
+            widget.draw()
+
 
 #     widget.draw()

@@ -7,6 +7,18 @@ $controlsz: 300px;
 $controlpadding: 16px;
 $slidersz: $controlsz * 0.75;
 
+h1 {
+    font-family: Palatino, Bookman, serif;
+    font-style: italic;
+    font-weight: normal;
+}
+
+h4 {
+    font-family: Palatino, Bookman, serif;
+    font-style: normal;
+    font-weight: normal;
+}
+
 #controls {
     float: left;
     width: $controlsz;
@@ -14,7 +26,7 @@ $slidersz: $controlsz * 0.75;
     padding-right: $controlpadding;
 };
 
-#window-width-slider {
+.slider-control {
     width: $slidersz;
 }
 
