@@ -140,16 +140,11 @@ $ ->
         # won't be any interpolation from the adjacent patches
         ufudge = 0.5 / (texture.width * rowlen)
         vfudge = 0.5 / (texture.height * nrows)
-        if depth == 1
-            return [0, 0, 1, 1]
-        else if depth < _rowsz
-            return [d/depth + ufudge, 0,(d+1)/depth - ufudge, 1]
-        else
-            dx = d % rowlen
-            dy = Math.floor(d / rowlen)
-            delx = 1 / rowlen
-            dely = 1 / Math.ceil(depth/rowlen)
-            return [dx * delx + ufudge, dy * dely + vfudge, (dx+1) * delx - ufudge, (dy+1) * dely - vfudge]
+        dx = d % rowlen
+        dy = Math.floor(d / rowlen)
+        delx = 1 / rowlen
+        dely = 1 / Math.ceil(depth/rowlen)
+        return [dx * delx + ufudge, dy * dely + vfudge, (dx+1) * delx - ufudge, (dy+1) * dely - vfudge]
 
     unpackInt = (string, idx) ->
         return string.charCodeAt(idx) * 256 + string.charCodeAt(idx+1)
@@ -162,6 +157,7 @@ $ ->
         depth = unpackInt data, 6
         sz = width * height * depth
         pixels = new Uint8Array sz
+        pixelsHigh = new Uint8Array sz
         
         rowlen = if depth < _rowsz then depth else _rowsz
         for d in [0 ... depth]
@@ -170,16 +166,16 @@ $ ->
             for i in [0 ... height]
                 for j in [0 ... width]
                     p = unpackInt data, 8 + 2 * ( d * height * width + i * width + j)
-                    pixels[(i + yoff * height) * rowlen * width + j + xoff * width] = p
-        return { bits : bits, width : width, height : height, depth : depth, pixels : pixels }
+                    pixelIdx = (i + yoff * height) * rowlen * width + j + xoff * width
+                    pixels[pixelIdx] = p
+                    pixelsHigh[pixelIdx] = p >> 8
+        return { bits : bits, width : width, height : height, depth : depth, pixels : pixels, pixelsHigh : pixelsHigh }
 
     makeTexture2dFromData = (widget, textureData) ->
         gl = widget.gl
         texture = gl.createTexture()
         gl.bindTexture gl.TEXTURE_2D, texture
-        depth = textureData.depth
-        rowlen = if depth < _rowsz then depth else _rowsz
-        nrows = Math.ceil(depth / rowlen)
+        [nrows, rowlen] = _textureLayout textureData
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, textureData.width * rowlen, textureData.height * nrows, 0,
             gl.LUMINANCE, gl.UNSIGNED_BYTE, textureData.pixels)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
