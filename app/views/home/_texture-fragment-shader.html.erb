@@ -1,7 +1,3 @@
-<% dimension ||= 2 %>
-<% texcoord = "vec#{dimension}" %>
-<% sampler = "sampler#{dimension == 2 ? '2D' : 'Cube' }" %>
-<% texturefn = "texture#{dimension == 2 ? '2D' : 'Cube' }" %>
 <% shaderName ||= "shader-fs" %>
 <script id="<%= shaderName %>" type="x-shader/x-fragment">
     #ifdef GL_ES
@@ -9,8 +5,8 @@
     #endif
 
     varying vec4 vPosition;
-    varying <%= texcoord %> vUV;
-    uniform <%= sampler %> uTexture;
+    varying vec2 vUV;
+    uniform sampler2D uTexture;
 
     uniform int uMaxLimit;
     uniform float uMax;
@@ -18,7 +14,7 @@
  
     void main(void) {
         float alpha = 1.0;
-        vec3 light = <%= texturefn %>(uTexture, vUV).rbg;
+        vec3 light = texture2D(uTexture, vUV).rgb;
 
         vec3 minrange = vec3(uMin, uMin, uMin);
         vec3 maxrange = vec3(uMax, uMax, uMax);

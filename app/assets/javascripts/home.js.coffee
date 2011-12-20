@@ -53,11 +53,12 @@ $ ->
             0, 0, 1,
             0, 0, 1
         ]
+        [u0, v0, u1, v1] = getUVOffsets widget.texture, Math.floor(widget.texture.depth / 2)
         uvs = [
-            0, 0,
-            1, 0,
-            0, 1,
-            1, 1
+            u0, v0
+            u1, v0,
+            u0, v1,
+            u1, v1
         ]
         this.setFloatBufferData this.positionBuffer, vertices, 3
         this.setFloatAttribPointer 'aVertexPosition', this.positionBuffer
@@ -124,6 +125,32 @@ $ ->
 # 
 #     widget.texture = texture
 
+    _rowsz = 16
+
+    _textureLayout = (texture) ->
+        depth = texture.depth
+        rowlen = if depth < _rowsz then depth else _rowsz
+        nrows = Math.ceil(depth / rowlen)
+        return [nrows, rowlen]
+
+    getUVOffsets = (texture, d) ->
+        depth = texture.depth
+        [nrows, rowlen] = _textureLayout texture
+        # nudge the bounds to the middle of the first and last pixels, so that there
+        # won't be any interpolation from the adjacent patches
+        ufudge = 0.5 / (texture.width * rowlen)
+        vfudge = 0.5 / (texture.height * nrows)
+        if depth == 1
+            return [0, 0, 1, 1]
+        else if depth < _rowsz
+            return [d/depth + ufudge, 0,(d+1)/depth - ufudge, 1]
+        else
+            dx = d % rowlen
+            dy = Math.floor(d / rowlen)
+            delx = 1 / rowlen
+            dely = 1 / Math.ceil(depth/rowlen)
+            return [dx * delx + ufudge, dy * dely + vfudge, (dx+1) * delx - ufudge, (dy+1) * dely - vfudge]
+
     unpackInt = (string, idx) ->
         return string.charCodeAt(idx) * 256 + string.charCodeAt(idx+1)
 
@@ -132,24 +159,37 @@ $ ->
         bits = unpackInt data, 0
         width = unpackInt data, 2
         height = unpackInt data, 4
-        sz = width * height
+        depth = unpackInt data, 6
+        sz = width * height * depth
         pixels = new Uint8Array sz
-        for i in [0 ... sz]
-            pixels[i] = unpackInt data, (i * 2 + 6)
-        return { bits : bits, width : width, height : height, pixels : pixels }
+        
+        rowlen = if depth < _rowsz then depth else _rowsz
+        for d in [0 ... depth]
+            xoff = d % rowlen
+            yoff = Math.floor(d / _rowsz)
+            for i in [0 ... height]
+                for j in [0 ... width]
+                    p = unpackInt data, 8 + 2 * ( d * height * width + i * width + j)
+                    pixels[(i + yoff * height) * rowlen * width + j + xoff * width] = p
+        return { bits : bits, width : width, height : height, depth : depth, pixels : pixels }
 
     makeTexture2dFromData = (widget, textureData) ->
         gl = widget.gl
         texture = gl.createTexture()
         gl.bindTexture gl.TEXTURE_2D, texture
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, textureData.width, textureData.height, 0,
+        depth = textureData.depth
+        rowlen = if depth < _rowsz then depth else _rowsz
+        nrows = Math.ceil(depth / rowlen)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, textureData.width * rowlen, textureData.height * nrows, 0,
             gl.LUMINANCE, gl.UNSIGNED_BYTE, textureData.pixels)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+        for p in ['height', 'width', 'depth']
+            texture[p] = textureData[p]
         return texture
 
     # get data
-    $.ajax '/binary2d',
+    $.ajax '/binary3d',
         type: 'GET',
         success: (data) ->
             pixelData = unpackTextureData (base64.decode data)
