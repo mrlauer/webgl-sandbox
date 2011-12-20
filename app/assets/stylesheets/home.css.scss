@@ -2,8 +2,8 @@
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
 
-$webglsz: 256px;
-$controlsz: 256px;
+$webglsz: 300px;
+$controlsz: 300px;
 $controlpadding: 16px;
 $slidersz: $controlsz * 0.75;
 
@@ -19,16 +19,22 @@ $slidersz: $controlsz * 0.75;
 }
 
 #main {
-    display: inline-block;
+    display: block;
+    position: relative;
+    left: $controlsz;
+    top: 0;
     width: $webglsz;
     height: $webglsz;
-    margin-left: $controlsz;
     border-color: black;
     border-style: solid;
     border-width: thin;
+    clear:none;
 };
 
 #canvas {
+    position:absolute;
+    left:0;
+    top:0;
     width: $webglsz;
     height: $webglsz;
 }
