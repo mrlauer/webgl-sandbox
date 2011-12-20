@@ -70,9 +70,9 @@ $ ->
         this.uniform1f('uMin', this.minrange)
         this.uniform1f('uMax', this.maxrange)
 
-        this.uniform1i 'uTexture', 0
-        this.gl.activeTexture this.gl.TEXTURE0
-        gl.bindTexture(gl.TEXTURE_2D, this.texture.texture)
+        this.uniform1f 'uMaxLimit', this.texture.getMaxLimit()
+        this.texture.setTextureUniforms this, 'uTextureLow', 'uTextureHigh'
+
         gl.drawArrays gl.TRIANGLE_STRIP, 0, this.positionBuffer.numItems
 
     widget = null
@@ -165,18 +165,35 @@ $ ->
 
         makeTexture2dFromData : (widget, textureData) ->
             gl = widget.gl
-            texture = gl.createTexture()
-            gl.bindTexture gl.TEXTURE_2D, texture
             [nrows, rowlen] = @_textureLayout textureData
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, textureData.width * rowlen, textureData.height * nrows, 0,
-                gl.LUMINANCE, gl.UNSIGNED_BYTE, textureData.pixels)
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+
+            makeTexture = (pixels) => 
+                texture = gl.createTexture()
+                gl.bindTexture gl.TEXTURE_2D, texture
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, textureData.width * rowlen, textureData.height * nrows, 0,
+                    gl.LUMINANCE, gl.UNSIGNED_BYTE, pixels)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+                return texture
             obj = new TextureObject
-            for p in ['height', 'width', 'depth']
+            for p in ['bits', 'height', 'width', 'depth']
                 obj[p] = textureData[p]
-            obj.texture = texture
+            obj.texture = makeTexture textureData.pixels
+            obj.textureHigh = makeTexture textureData.pixelsHigh
             return obj
+
+        getMaxLimit : ->
+            return (1 << @bits) - 1
+
+        setTextureUniforms : (widget, lowvar, highvar) ->
+            gl = widget.gl
+            widget.uniform1i lowvar, 0
+            gl.activeTexture gl.TEXTURE0
+            gl.bindTexture(gl.TEXTURE_2D, @texture)
+            if highvar?
+                widget.uniform1i highvar, 1
+                gl.activeTexture gl.TEXTURE1
+                gl.bindTexture gl.TEXTURE_2D, @textureHigh
 
     # get data
     $.ajax '/binary3d',

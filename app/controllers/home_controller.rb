@@ -43,7 +43,7 @@ class HomeController < ApplicationController
   def binary3d
       sz = 16 
       sz2 = sz / 2
-      bits = 8
+      bits = 12
       m = (1 << bits) - 1
       depth = 32
       depth2 = depth/2

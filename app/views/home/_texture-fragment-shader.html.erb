@@ -6,15 +6,18 @@
 
     varying vec4 vPosition;
     varying vec2 vUV;
-    uniform sampler2D uTexture;
+    uniform sampler2D uTextureLow;
+    uniform sampler2D uTextureHigh;
 
-    uniform int uMaxLimit;
+    uniform float uMaxLimit;
     uniform float uMax;
     uniform float uMin;
  
     void main(void) {
         float alpha = 1.0;
-        vec3 light = texture2D(uTexture, vUV).rgb;
+        vec3 low = texture2D(uTextureLow, vUV).rgb;
+        vec3 high = texture2D(uTextureHigh, vUV).rgb;
+        vec3 light = (low * 255.0 + high * (255.0 * 256.0) ) / uMaxLimit;
 
         vec3 minrange = vec3(uMin, uMin, uMin);
         vec3 maxrange = vec3(uMax, uMax, uMax);
