@@ -53,7 +53,7 @@ $ ->
             0, 0, 1,
             0, 0, 1
         ]
-        [u0, v0, u1, v1] = getUVOffsets widget.texture, Math.floor(widget.texture.depth / 2)
+        [u0, v0, u1, v1] = widget.texture.getUVOffsets Math.floor(widget.texture.depth / 2)
         uvs = [
             u0, v0
             u1, v0,
@@ -72,7 +72,7 @@ $ ->
 
         this.uniform1i 'uTexture', 0
         this.gl.activeTexture this.gl.TEXTURE0
-        gl.bindTexture(gl.TEXTURE_2D, this.texture)
+        gl.bindTexture(gl.TEXTURE_2D, this.texture.texture)
         gl.drawArrays gl.TRIANGLE_STRIP, 0, this.positionBuffer.numItems
 
     widget = null
@@ -110,87 +110,81 @@ $ ->
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
         return texture
 
-    # make a texture
-    gl = widget.gl
-    texbits = []
-    texsz = 256
-    texsz2 = texsz/2
-    for i in [0...texsz]
-        f1 = (i - texsz2)/texsz2
-        for j in [0...texsz]
-            f2 = (j-texsz2)/texsz2
-            z = Math.sqrt(1.0 - f1*f1 - f2*f2)
-            texbits.push z
-#     texture = makeTexture2d gl, 1, texsz, texsz, texbits
-# 
-#     widget.texture = texture
+    class TextureObject
+        _rowsz : 16
 
-    _rowsz = 16
+        constructor : ->
 
-    _textureLayout = (texture) ->
-        depth = texture.depth
-        rowlen = if depth < _rowsz then depth else _rowsz
-        nrows = Math.ceil(depth / rowlen)
-        return [nrows, rowlen]
+        _textureLayout : (data) ->
+            data ?= this
+            _rowsz = @_rowsz
+            depth = data.depth
+            rowlen = if depth < _rowsz then depth else _rowsz
+            nrows = Math.ceil(depth / rowlen)
+            return [nrows, rowlen]
 
-    getUVOffsets = (texture, d) ->
-        depth = texture.depth
-        [nrows, rowlen] = _textureLayout texture
-        # nudge the bounds to the middle of the first and last pixels, so that there
-        # won't be any interpolation from the adjacent patches
-        ufudge = 0.5 / (texture.width * rowlen)
-        vfudge = 0.5 / (texture.height * nrows)
-        dx = d % rowlen
-        dy = Math.floor(d / rowlen)
-        delx = 1 / rowlen
-        dely = 1 / Math.ceil(depth/rowlen)
-        return [dx * delx + ufudge, dy * dely + vfudge, (dx+1) * delx - ufudge, (dy+1) * dely - vfudge]
+        getUVOffsets : (d) ->
+            depth = @depth
+            [nrows, rowlen] = @_textureLayout()
+            # nudge the bounds to the middle of the first and last pixels, so that there
+            # won't be any interpolation from the adjacent patches
+            ufudge = 0.5 / (@width * rowlen)
+            vfudge = 0.5 / (@height * nrows)
+            dx = d % rowlen
+            dy = Math.floor(d / rowlen)
+            delx = 1 / rowlen
+            dely = 1 / Math.ceil(depth/rowlen)
+            return [dx * delx + ufudge, dy * dely + vfudge, (dx+1) * delx - ufudge, (dy+1) * dely - vfudge]
 
-    unpackInt = (string, idx) ->
-        return string.charCodeAt(idx) * 256 + string.charCodeAt(idx+1)
+        unpackInt : (string, idx) ->
+            return string.charCodeAt(idx) * 256 + string.charCodeAt(idx+1)
 
-    unpackTextureData = (data) ->
-        len = data.length
-        bits = unpackInt data, 0
-        width = unpackInt data, 2
-        height = unpackInt data, 4
-        depth = unpackInt data, 6
-        sz = width * height * depth
-        pixels = new Uint8Array sz
-        pixelsHigh = new Uint8Array sz
-        
-        rowlen = if depth < _rowsz then depth else _rowsz
-        for d in [0 ... depth]
-            xoff = d % rowlen
-            yoff = Math.floor(d / _rowsz)
-            for i in [0 ... height]
-                for j in [0 ... width]
-                    p = unpackInt data, 8 + 2 * ( d * height * width + i * width + j)
-                    pixelIdx = (i + yoff * height) * rowlen * width + j + xoff * width
-                    pixels[pixelIdx] = p
-                    pixelsHigh[pixelIdx] = p >> 8
-        return { bits : bits, width : width, height : height, depth : depth, pixels : pixels, pixelsHigh : pixelsHigh }
+        unpackTextureData : (data) ->
+            len = data.length
+            unpackInt = @unpackInt
+            bits = unpackInt data, 0
+            width = unpackInt data, 2
+            height = unpackInt data, 4
+            depth = unpackInt data, 6
+            sz = width * height * depth
+            pixels = new Uint8Array sz
+            pixelsHigh = new Uint8Array sz
+            
+            _rowsz = @_rowsz
+            rowlen = if depth < _rowsz then depth else _rowsz
+            for d in [0 ... depth]
+                xoff = d % rowlen
+                yoff = Math.floor(d / _rowsz)
+                for i in [0 ... height]
+                    for j in [0 ... width]
+                        p = unpackInt data, 8 + 2 * ( d * height * width + i * width + j)
+                        pixelIdx = (i + yoff * height) * rowlen * width + j + xoff * width
+                        pixels[pixelIdx] = p
+                        pixelsHigh[pixelIdx] = p >> 8
+            return { bits : bits, width : width, height : height, depth : depth, pixels : pixels, pixelsHigh : pixelsHigh }
 
-    makeTexture2dFromData = (widget, textureData) ->
-        gl = widget.gl
-        texture = gl.createTexture()
-        gl.bindTexture gl.TEXTURE_2D, texture
-        [nrows, rowlen] = _textureLayout textureData
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, textureData.width * rowlen, textureData.height * nrows, 0,
-            gl.LUMINANCE, gl.UNSIGNED_BYTE, textureData.pixels)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-        for p in ['height', 'width', 'depth']
-            texture[p] = textureData[p]
-        return texture
+        makeTexture2dFromData : (widget, textureData) ->
+            gl = widget.gl
+            texture = gl.createTexture()
+            gl.bindTexture gl.TEXTURE_2D, texture
+            [nrows, rowlen] = @_textureLayout textureData
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, textureData.width * rowlen, textureData.height * nrows, 0,
+                gl.LUMINANCE, gl.UNSIGNED_BYTE, textureData.pixels)
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+            obj = new TextureObject
+            for p in ['height', 'width', 'depth']
+                obj[p] = textureData[p]
+            obj.texture = texture
+            return obj
 
     # get data
     $.ajax '/binary3d',
         type: 'GET',
         success: (data) ->
-            pixelData = unpackTextureData (base64.decode data)
-            texture = makeTexture2dFromData widget, pixelData
-            widget.texture = texture
+            pixelData = TextureObject::unpackTextureData (base64.decode data)
+            textureObj = TextureObject::makeTexture2dFromData widget, pixelData
+            widget.texture = textureObj
             widget.draw()
 
     $('#window-width-slider').slider
