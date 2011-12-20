@@ -34,8 +34,8 @@ $ ->
 
         this.setupShader()
 
-        if @slice?
-            @slice.draw this
+        for slice in @slices
+            slice.draw this
 
     widget = null
     $('#canvas').mrlgl
@@ -214,18 +214,48 @@ $ ->
             widget.uniform1f 'uMaxLimit', texture.getMaxLimit()
             texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
 
+            widget.pushmv()
+            if @matrix?
+                mat4.multiply widget.mvMatrix, @matrix
+                widget.setUniformMatrices 'uMVMatrix', 'uPMatrix', 'uNMatrix'
             gl.drawArrays gl.TRIANGLE_STRIP, 0, widget.positionBuffer.numItems
+            widget.popmv()
 
+    yzMatrix = ->
+        return mat4.create [
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            1, 0, 0, 0,
+            0, 0, 0, 1]
+
+    zxMatrix = ->
+        return mat4.create [
+            0, 0, 1, 0,
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 0, 1]
+
+    swizzleYZX = ([x, y, z]) -> [y, z, x]
+    swizzleZXY = ([x, y, z]) -> [z, x, y]
 
     # get data
     $.ajax '/binary3d',
         type: 'GET',
         success: (data) ->
-            pixelData = TextureObject::unpackTextureData (base64.decode data) #,
-#                 ([x, y, z]) -> [y, z, x],
-#                 ([y, z, x]) -> [x, y, z]
-            textureObj = TextureObject::makeTexture2dFromData widget, pixelData
-            widget.slice = new SliceObject textureObj
+            widget.slices = []
+            makeSlice = (idx, swizzle, unswizzle, matrix) ->
+                pixelData = TextureObject::unpackTextureData (base64.decode data), swizzle, unswizzle
+                textureObj = TextureObject::makeTexture2dFromData widget, pixelData
+                slice = new SliceObject textureObj
+                slice.matrix = matrix
+                widget.slices.push slice
+                bindSliceControls widget, slice, idx
+            # xy
+            makeSlice 0, ((x) -> x), ((y) -> y)
+            # yz
+            makeSlice 1, swizzleYZX, swizzleZXY, yzMatrix()
+            # zx
+            makeSlice 2, swizzleZXY, swizzleYZX, zxMatrix()
             widget.draw()
 
     $('#window-width-slider').slider
@@ -239,14 +269,17 @@ $ ->
             widget.maxrange = $(this).slider('values', 1)
             widget.draw()
 
-    $('#z-depth-slider').slider
-        min : 0
-        max : 1
-        step : 1/128 
-        value : 0.5
-        slide : (event, ui) ->
-            widget.slice.level = ui.value
-            widget.draw()
+    bindSliceControls = (widget, slice, idx) ->
+        coord = ['z', 'x', 'y'][idx]
+        depthSliderSelector = "##{coord}-depth-slider"
+        $(depthSliderSelector).slider('destroy')
+        $(depthSliderSelector).slider
+            min : 0
+            max : 1
+            step : 1/128
+            value : 0.5
+            slide : (event, ui) ->
+                slice.level = ui.value
+                widget.draw()
 
 
-#     widget.draw()

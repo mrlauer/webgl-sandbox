@@ -41,15 +41,15 @@ class HomeController < ApplicationController
   #     bytes 7 and 8: height (big-endian)
   #     everything else: data, in 2-byte words, big-endian
   def binary3d
-      sz = 16 
+      sz = 12 
       sz2 = sz / 2
       bits = 12
       m = (1 << bits) - 1
       depth = 32
       depth2 = depth/2
-      height = 32
+      height = 64
       height2 = height/2
-      width = 32
+      width = 64
       width2 = width/2
       data = [bits, width, height, depth]
       (0 .. (depth-1)).each do |i|
@@ -59,7 +59,7 @@ class HomeController < ApplicationController
                   x1 = (x+1)/2
                   y = Float(j + 0.5 - height2) / (height2 - 0.5)
                   z = Float(k + 0.5 - width2) / (width2 - 0.5)
-                  val = Math.sqrt ( [1.0 - (y*y + z*z)/x1/x1, 0.0].max )
+                  val = Math.sqrt ( [1.0 - (y*y + 2.0*z*z)/x1/x1, 0.0].max )
 #                   val = (i % 2 == i % 16) ? 0 : 1
 #                   val = ((y > 0) == (z > 0)) ? 1 : 0
                   data.push Integer(val * m)
