@@ -5,6 +5,11 @@ set :scm, :git
 # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
 
 set :deploy_to, "/home/mrlauer/webapps/babybrain"
+set :default_environment, {
+  'PATH' => "#{deploy_to}/bin:$PATH",
+  'GEM_HOME' => "#{deploy_to}/gems" 
+}
+
 
 role :web, "web22.webfaction.com"                          # Your HTTP server, Apache/etc
 role :app, "web22.webfaction.com"                          # This may be the same as your `Web` server
