@@ -2,13 +2,13 @@
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
 
-$webglsz: 300px;
+$webglsz: 728px;
 $controlsz: 300px;
 $controlpadding: 16px;
 $slidersz: $controlsz * 0.75;
 
 h1 {
-    font-family: Palatino, Bookman, serif;
+    font-family: Palatino, 'Book Antiqua', serif;
     font-style: italic;
     font-weight: normal;
 }

@@ -53,7 +53,7 @@ $ ->
             this.maxrange = 1.0
 
             this.camera = new mrlCamera
-                eye : [5, 5, 5],
+                eye : [4, 4, 4],
                 direction : [-1, -1, -1],
                 up : [0, 0, 1],
                 focalDist : 10,
@@ -118,7 +118,8 @@ $ ->
             heightIn = unpackInt data, 4
             depthIn = unpackInt data, 6
             [width, height, depth] = swizzle [widthIn, heightIn, depthIn]
-            sz = width * height * depth
+            [nrows, rowlen] = @_textureLayout { depth: depth }
+            sz = width * height * nrows * rowlen
             pixels = new Uint8Array sz
             pixelsHigh = new Uint8Array sz
             

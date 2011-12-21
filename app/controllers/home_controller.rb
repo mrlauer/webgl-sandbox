@@ -69,4 +69,21 @@ class HomeController < ApplicationController
       send_data (Base64.encode64(data.pack 'n*'))
   end
 
+  def binary3d_file
+      bits = 10
+      depth = 130
+      height = 256
+      width = 256
+
+      filename = '/Users/mrlauer/Downloads/mrhead/MR-head.raw'
+      data = ''
+      File.open filename, "r" do |strm|
+        fmt = 'v*'
+        r = strm.read
+        results = r.unpack fmt
+        results = [bits, width, height, depth] + results
+        send_data Base64.encode64(results.pack 'n*')
+      end
+  end
+
 end
