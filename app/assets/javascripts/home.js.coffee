@@ -108,7 +108,7 @@ $ ->
             return [dx * delx + ufudge, dy * dely + vfudge, (dx+1) * delx - ufudge, (dy+1) * dely - vfudge]
 
         unpackInt : (string, idx) ->
-            return string.charCodeAt(idx) * 256 + string.charCodeAt(idx+1)
+            return (string.charCodeAt(idx) & 0xff) * 256 + (string.charCodeAt(idx+1) & 0xff)
 
         unpackTextureData : (data, swizzle = ( (x) -> x ), unswizzle = (x) -> x ) ->
             len = data.length
@@ -243,10 +243,12 @@ $ ->
     load_data = (url) ->
         $.ajax url,
             type: 'GET',
-            success: (data) ->
+            beforeSend: (xhr, settings) ->
+                xhr.overrideMimeType('text/plain; charset=x-user-defined')
+            success: (data, status, xhr) ->
                 widget.slices = []
                 makeSlice = (idx, swizzle, unswizzle, matrix) ->
-                    pixelData = TextureObject::unpackTextureData (base64.decode data), swizzle, unswizzle
+                    pixelData = TextureObject::unpackTextureData data, swizzle, unswizzle
                     textureObj = TextureObject::makeTexture2dFromData widget, pixelData
                     slice = new SliceObject textureObj
                     slice.matrix = matrix

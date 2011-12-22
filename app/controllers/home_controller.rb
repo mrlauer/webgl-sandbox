@@ -66,7 +66,7 @@ class HomeController < ApplicationController
               end
           end
       end
-      send_data (Base64.encode64(data.pack 'n*'))
+      send_data (data.pack 'n*')
   end
 
   def binary3d_file
@@ -82,13 +82,13 @@ class HomeController < ApplicationController
         r = strm.read
         results = r.unpack fmt
         results = [bits, width, height, depth] + results
-        send_data Base64.encode64(results.pack 'n*')
+        send_data (results.pack 'n*')
       end
   end
 
   def headData
       response.header['Content-Encoding'] = 'gzip'
-      send_file Rails.root.join('data', 'data.txt.gz')
+      send_file Rails.root.join('data', 'data.gz')
   end
 
 end
