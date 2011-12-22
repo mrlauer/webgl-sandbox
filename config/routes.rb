@@ -54,6 +54,7 @@ Image::Application.routes.draw do
 
   match "/binary2d" => "home#binary2d"
   match "/binary3d" => "home#binary3d"
+  match "/headData" => "home#headData"
 
   # See how all your routes lay out with "rake routes"
 

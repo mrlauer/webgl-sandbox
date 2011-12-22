@@ -240,24 +240,30 @@ $ ->
     swizzleZXY = ([x, y, z]) -> [z, x, y]
 
     # get data
-    $.ajax '/binary3d',
-        type: 'GET',
-        success: (data) ->
-            widget.slices = []
-            makeSlice = (idx, swizzle, unswizzle, matrix) ->
-                pixelData = TextureObject::unpackTextureData (base64.decode data), swizzle, unswizzle
-                textureObj = TextureObject::makeTexture2dFromData widget, pixelData
-                slice = new SliceObject textureObj
-                slice.matrix = matrix
-                widget.slices.push slice
-                bindSliceControls widget, slice, idx
-            # xy
-            makeSlice 0, ((x) -> x), ((y) -> y)
-            # yz
-            makeSlice 1, swizzleYZX, swizzleZXY, yzMatrix()
-            # zx
-            makeSlice 2, swizzleZXY, swizzleYZX, zxMatrix()
-            widget.draw()
+    load_data = (url) ->
+        $.ajax url,
+            type: 'GET',
+            success: (data) ->
+                widget.slices = []
+                makeSlice = (idx, swizzle, unswizzle, matrix) ->
+                    pixelData = TextureObject::unpackTextureData (base64.decode data), swizzle, unswizzle
+                    textureObj = TextureObject::makeTexture2dFromData widget, pixelData
+                    slice = new SliceObject textureObj
+                    slice.matrix = matrix
+                    widget.slices.push slice
+                    bindSliceControls widget, slice, idx
+                # xy
+                makeSlice 0, ((x) -> x), ((y) -> y)
+                # yz
+                makeSlice 1, swizzleYZX, swizzleZXY, yzMatrix()
+                # zx
+                makeSlice 2, swizzleZXY, swizzleYZX, zxMatrix()
+                widget.draw()
+
+    load_data '/binary3d'
+
+    $('#load-head').click ->
+        load_data '/headData'
 
     $('#window-width-slider').slider
         min : 0
@@ -277,7 +283,7 @@ $ ->
         $(depthSliderSelector).slider
             min : 0
             max : 1
-            step : 1/128
+            step : 1 / (slice.textureObj.depth - 1)
             value : 0.5
             slide : (event, ui) ->
                 slice.level = ui.value

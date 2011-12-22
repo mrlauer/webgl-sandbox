@@ -86,4 +86,9 @@ class HomeController < ApplicationController
       end
   end
 
+  def headData
+      response.header['Content-Encoding'] = 'gzip'
+      send_file Rails.root.join('data', 'data.txt.gz')
+  end
+
 end
