@@ -3,6 +3,16 @@
 # You can use CoffeeScript in this file: http://jashkenas.github.com/coffee-script/
 
 $ ->
+    # TODO: move this!
+
+    vec3.linComb = (vec1, s1, vec2, s2, dest) ->
+    	if(!dest)
+            dest = vec1
+        dest[0] = vec1[0] * s1 + vec2[0] * s2
+        dest[1] = vec1[1] * s1 + vec2[1] * s2
+        dest[2] = vec1[2] * s1 + vec2[2] * s2
+        return dest
+    
     if false
         $.ajax '/binary',
             type: 'GET',
@@ -52,16 +62,54 @@ $ ->
             this.minrange = 0.0
             this.maxrange = 1.0
 
+            eye = [4, 4, 4]
             this.camera = new mrlCamera
-                eye : [4, 4, 4],
-                direction : [-1, -1, -1],
+                eye : eye
+                direction : (vec3.normalize [-1, -1, -1]),
                 up : [0, 0, 1],
-                focalDist : 10,
+                focalDist :  vec3.length eye
                 near : 0.1,
                 far : 20,
                 angle : 30
 
         draw : drawScene
+
+
+    $('#canvas').dragHelper
+        onDrag : (e, delx, dely) ->
+            widget = $(this.element).data('mrlgl')
+            camera = widget.camera
+            mat4.identity(widget.pMatrix)
+            mat4.identity(widget.mvMatrix)
+            helper = new ViewHelper(widget)
+            camera.setMatrices(helper)
+            
+            deltaInFocalPlane = ->
+                focalPlane = helper.screenPlaneThrough(camera.focalPoint())
+                oldPt = helper.screenToModel(this.lastX, this.lastY, focalPlane)
+                pt = helper.screenToModel(this.lastX+delx, this.lastY+dely, focalPlane)
+                vec3.subtract(pt, oldPt)
+                return pt
+            
+            sz = Math.min($(this.element).height(), $(this.element).width())
+            # remember, screen coordinates go top to bottom and left to right.
+            axis = [dely, delx, 0]
+            angle = - vec3.length(axis) / sz * Math.PI
+            
+            orbit = true
+            if(orbit)
+                # Turn that axis into a model vector in the plane of the focalpoint
+                # Seems a lot more work than it should!
+                screenPt = helper.modelToScreen(camera.focalPoint())
+                otherScreenPt = [screenPt.pageX - dely, screenPt.pageY + delx]
+                otherScreenRay = helper.screenToRay(screenPt.pageX - dely, screenPt.pageY + delx)
+                focalPlane = helper.screenPlaneThrough(camera.focalPoint())
+                otherModelPoint = helper.intersectRayPlane(otherScreenRay, focalPlane)
+                modelAxis = vec3.normalize(vec3.subtract(otherModelPoint, camera.focalPoint()))
+                
+                camera.rotateAbout(-angle, modelAxis, camera.focalPoint())
+            widget.draw()
+    
 
     # texture-making functions
     makeTexture2d = (gl, maxval, height, width, data) ->
