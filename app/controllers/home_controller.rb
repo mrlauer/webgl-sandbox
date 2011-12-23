@@ -51,7 +51,16 @@ class HomeController < ApplicationController
       height2 = height/2
       width = 64
       width2 = width/2
-      data = [bits, width, height, depth]
+      hdr = """
+NRRD0004
+type: short
+dimension: 3
+sizes: #{width} #{height} #{depth}
+endian: big
+encoding: raw
+
+"""
+      data = []
       (0 .. (depth-1)).each do |i|
           (0 .. (height-1)).each do |j|
               (0 .. (width-1)).each do |k|
@@ -66,7 +75,7 @@ class HomeController < ApplicationController
               end
           end
       end
-      send_data (data.pack 'n*')
+      send_data (hdr + (data.pack 'n*'))
   end
 
   def binary3d_file
@@ -88,7 +97,7 @@ class HomeController < ApplicationController
 
   def headData
       response.header['Content-Encoding'] = 'gzip'
-      send_file Rails.root.join('data', 'data.gz')
+      send_file Rails.root.join('data', 'data2.gz')
   end
 
 end

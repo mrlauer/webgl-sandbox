@@ -3,6 +3,7 @@
 # You can use CoffeeScript in this file: http://jashkenas.github.com/coffee-script/
 
 #= require webgl
+#= require readnrrd
 
 $ ->
     # TODO: move this!
@@ -162,16 +163,18 @@ $ ->
 
         unpackTextureData : (data, swizzle = ( (x) -> x ), unswizzle = (x) -> x ) ->
             len = data.length
-            unpackInt = @unpackInt
-            bits = unpackInt data, 0
-            widthIn = unpackInt data, 2
-            heightIn = unpackInt data, 4
-            depthIn = unpackInt data, 6
+            reader = new NrrdReader(data)
+            reader.parseHeader()
+            unpackInt = reader.getValueFn()
+            widthIn = reader.sizes[0]
+            heightIn = reader.sizes[1]
+            depthIn = reader.sizes[2]
             [width, height, depth] = swizzle [widthIn, heightIn, depthIn]
             [nrows, rowlen] = @_textureLayout { depth: depth }
             sz = width * height * nrows * rowlen
             pixels = new Uint8Array sz
             pixelsHigh = new Uint8Array sz
+            maxValue = reader.max ? 255
             
             _rowsz = @_rowsz
             rowlen = if depth < _rowsz then depth else _rowsz
@@ -181,10 +184,16 @@ $ ->
                 for i in [0 ... height]
                     for j in [0 ... width]
                         [jIn, iIn, dIn] = unswizzle [j, i, d]
-                        p = unpackInt data, 8 + 2 * ( dIn * heightIn * widthIn + iIn * widthIn + jIn)
+                        p = unpackInt ( dIn * heightIn * widthIn + iIn * widthIn + jIn)
+                        if p > maxValue then maxValue = p
                         pixelIdx = (i + yoff * height) * rowlen * width + j + xoff * width
                         pixels[pixelIdx] = p
                         pixelsHigh[pixelIdx] = p >> 8
+            bits = 8
+            for b in [8 ... 16]
+                if (1 << b) > maxValue
+                    bits = b
+                    break
             return { bits : bits, width : width, height : height, depth : depth, pixels : pixels, pixelsHigh : pixelsHigh }
 
         makeTexture2dFromData : (widget, textureData) ->

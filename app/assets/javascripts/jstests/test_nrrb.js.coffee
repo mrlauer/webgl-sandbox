@@ -31,5 +31,5 @@ test "simple nrrd reader", ->
     deepEqual reader.vectors, [ [0, 1, 0], [0, 0, -1], [-1.299995, 0, 0] ]
 
     equal testData[reader.pos..], '\x34\x0f\x00\x20', 'data position'
-    equal reader.getIntFn()(0), 0xf34, 'got int 0'
-    equal reader.getIntFn()(1), 0x2000, 'got int 1'
+    equal reader.getValueFn()(0), 0xf34, 'got int 0'
+    equal reader.getValueFn()(1), 0x2000, 'got int 1'

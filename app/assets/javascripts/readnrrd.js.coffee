@@ -51,7 +51,7 @@ class NrrdReader
                 if fn
                     fn.call this, data
 
-    getIntFn : ->
+    getValueFn : ->
         pos = @pos
         data = @data
         if @endian == 'big'
