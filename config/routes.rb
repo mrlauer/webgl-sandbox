@@ -56,6 +56,9 @@ Image::Application.routes.draw do
   match "/binary3d" => "home#binary3d"
   match "/headData" => "home#headData"
 
+  # javascript testing
+  match "/jstests" => "jstests#jstests"
+
   # See how all your routes lay out with "rake routes"
 
   # This is a legacy wild controller route that's not recommended for RESTful applications.
