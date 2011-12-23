@@ -50,6 +50,17 @@ class NrrdReader
                 fn = @fieldFunctions[field]
                 if fn
                     fn.call this, data
+                else
+                    this[field] = data
+        # make sure we have some spacing
+        if not @vectors?
+            @vectors = [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1]
+            ]
+
+
 
     getValueFn : ->
         pos = @pos

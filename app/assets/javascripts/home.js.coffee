@@ -194,7 +194,18 @@ $ ->
                 if (1 << b) > maxValue
                     bits = b
                     break
-            return { bits : bits, width : width, height : height, depth : depth, pixels : pixels, pixelsHigh : pixelsHigh }
+            # directions
+            vectors = swizzle reader.vectors
+
+            return {
+                bits : bits,
+                width : width,
+                height : height,
+                depth : depth,
+                vectors : vectors
+                pixels : pixels,
+                pixelsHigh : pixelsHigh
+            }
 
         makeTexture2dFromData : (widget, textureData) ->
             gl = widget.gl
@@ -298,6 +309,13 @@ $ ->
     swizzleYZX = ([x, y, z]) -> [y, z, x]
     swizzleZXY = ([x, y, z]) -> [z, x, y]
 
+    _makeMat4 = (vecs) ->
+        return mat4.create [
+            vecs[0][0], vecs[0][1], vecs[0][2], 0,
+            vecs[1][0], vecs[1][1], vecs[1][2], 0,
+            vecs[2][0], vecs[2][1], vecs[2][2], 0,
+            0, 0, 0, 1 ]
+        
     # get data
     load_data = (url) ->
         $.ajax url,
@@ -310,15 +328,27 @@ $ ->
                     pixelData = TextureObject::unpackTextureData data, swizzle, unswizzle
                     textureObj = TextureObject::makeTexture2dFromData widget, pixelData
                     slice = new SliceObject textureObj
-                    slice.matrix = matrix
+                    #yuck
+                    vec3.scale pixelData.vectors[0], pixelData.width
+                    vec3.scale pixelData.vectors[1], pixelData.height
+                    vec3.scale pixelData.vectors[2], pixelData.depth
+                    slice.matrix = _makeMat4 pixelData.vectors
                     widget.slices.push slice
                     bindSliceControls widget, slice, idx
                 # xy
                 makeSlice 0, ((x) -> x), ((y) -> y)
                 # yz
-                makeSlice 1, swizzleYZX, swizzleZXY, yzMatrix()
+                makeSlice 1, swizzleYZX, swizzleZXY
                 # zx
-                makeSlice 2, swizzleZXY, swizzleYZX, zxMatrix()
+                makeSlice 2, swizzleZXY, swizzleYZX
+
+                pts = []
+                for i in [-1, 1]
+                    for j in [-1, 1]
+                        for k in [-1, 1]
+                            pts.push mat4.multiplyVec3 widget.slices[0].matrix, [i, j, k]
+
+                widget.camera.zoomToFit pts
                 widget.draw()
 
     load_data '/binary3d'
