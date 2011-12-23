@@ -17,7 +17,7 @@ encoding: raw
 space origin: (86.644897,-133.928604,116.785698)
 data file: MR-head.raw
 
-foobarbazwox
+\x34\x0f\x00\x20
 """
 
 test "simple nrrd reader", ->
@@ -30,4 +30,6 @@ test "simple nrrd reader", ->
     deepEqual reader.sizes, [256, 256, 130], 'read sizes'
     deepEqual reader.vectors, [ [0, 1, 0], [0, 0, -1], [-1.299995, 0, 0] ]
 
-    equal testData[reader.pos..], 'foobarbazwox', 'data position'
+    equal testData[reader.pos..], '\x34\x0f\x00\x20', 'data position'
+    equal reader.getIntFn()(0), 0xf34, 'got int 0'
+    equal reader.getIntFn()(1), 0x2000, 'got int 1'

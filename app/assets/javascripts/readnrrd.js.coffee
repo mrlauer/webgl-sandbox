@@ -50,6 +50,18 @@ class NrrdReader
                 fn = @fieldFunctions[field]
                 if fn
                     fn.call this, data
-                    
+
+    getIntFn : ->
+        pos = @pos
+        data = @data
+        if @endian == 'big'
+            return (idx) ->
+                iidx = pos + idx*2
+                return (data.charCodeAt(iidx) & 0xff) * 256 + (data.charCodeAt(iidx+1) & 0xff)
+        else
+            return (idx) ->
+                iidx = pos + idx*2
+                return (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
+        
 
 exports.NrrdReader = NrrdReader
