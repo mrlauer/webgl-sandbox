@@ -3,7 +3,9 @@
 <head>
   <title>BabyBrain</title>
   <%= stylesheet_link_tag    "application" %>
+  <%= yield :stylesheets %>
   <%= javascript_include_tag "application" %>
+  <%= yield :scripts %>
   <%= csrf_meta_tags %>
 
   <%= yield :shaders %>
