@@ -4,6 +4,7 @@
 
 #= require webgl
 #= require readnrrd
+#= require filewidget
 
 $ ->
     # TODO: move this!
@@ -317,44 +318,47 @@ $ ->
             0, 0, 0, 1 ]
         
     # get data
-    load_data = (url) ->
+    load_data = (widget, data) ->
+        widget.slices = []
+        makeSlice = (idx, swizzle, unswizzle, matrix) ->
+            pixelData = TextureObject::unpackTextureData data, swizzle, unswizzle
+            textureObj = TextureObject::makeTexture2dFromData widget, pixelData
+            slice = new SliceObject textureObj
+            #yuck
+            vec3.scale pixelData.vectors[0], pixelData.width
+            vec3.scale pixelData.vectors[1], pixelData.height
+            vec3.scale pixelData.vectors[2], pixelData.depth
+            slice.matrix = _makeMat4 pixelData.vectors
+            widget.slices.push slice
+            bindSliceControls widget, slice, idx
+        # xy
+        makeSlice 0, ((x) -> x), ((y) -> y)
+        # yz
+        makeSlice 1, swizzleYZX, swizzleZXY
+        # zx
+        makeSlice 2, swizzleZXY, swizzleYZX
+
+        pts = []
+        for i in [-1, 1]
+            for j in [-1, 1]
+                for k in [-1, 1]
+                    pts.push mat4.multiplyVec3 widget.slices[0].matrix, [i, j, k]
+
+        widget.camera.zoomToFit pts
+        widget.draw()
+
+    load_url = (url) ->
         $.ajax url,
             type: 'GET',
             beforeSend: (xhr, settings) ->
                 xhr.overrideMimeType('text/plain; charset=x-user-defined')
             success: (data, status, xhr) ->
-                widget.slices = []
-                makeSlice = (idx, swizzle, unswizzle, matrix) ->
-                    pixelData = TextureObject::unpackTextureData data, swizzle, unswizzle
-                    textureObj = TextureObject::makeTexture2dFromData widget, pixelData
-                    slice = new SliceObject textureObj
-                    #yuck
-                    vec3.scale pixelData.vectors[0], pixelData.width
-                    vec3.scale pixelData.vectors[1], pixelData.height
-                    vec3.scale pixelData.vectors[2], pixelData.depth
-                    slice.matrix = _makeMat4 pixelData.vectors
-                    widget.slices.push slice
-                    bindSliceControls widget, slice, idx
-                # xy
-                makeSlice 0, ((x) -> x), ((y) -> y)
-                # yz
-                makeSlice 1, swizzleYZX, swizzleZXY
-                # zx
-                makeSlice 2, swizzleZXY, swizzleYZX
+                load_data widget, data
 
-                pts = []
-                for i in [-1, 1]
-                    for j in [-1, 1]
-                        for k in [-1, 1]
-                            pts.push mat4.multiplyVec3 widget.slices[0].matrix, [i, j, k]
-
-                widget.camera.zoomToFit pts
-                widget.draw()
-
-    load_data '/binary3d'
+    load_url '/binary3d'
 
     $('#load-head').click ->
-        load_data '/headData'
+        load_url '/headData'
 
     $('#window-width-slider').slider
         min : 0
@@ -380,4 +384,7 @@ $ ->
                 slice.level = ui.value
                 widget.draw()
 
+    $('#load-file').fileWidget
+        processFile : (data) ->
+            load_data widget, data
 
