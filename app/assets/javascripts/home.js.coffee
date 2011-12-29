@@ -133,6 +133,12 @@ $ ->
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
         return texture
 
+    # TODO, maybe: make this a widget
+    statusArea = $('#status')
+    setStatus = (msg, err) ->
+        statusArea.text(msg)
+        statusArea.toggleClass('error', err ? false)
+
     class TextureObject
         _rowsz : 16
 
@@ -319,35 +325,40 @@ $ ->
         
     # get data
     load_data = (widget, data) ->
-        widget.slices = []
-        makeSlice = (idx, swizzle, unswizzle, matrix) ->
-            pixelData = TextureObject::unpackTextureData data, swizzle, unswizzle
-            textureObj = TextureObject::makeTexture2dFromData widget, pixelData
-            slice = new SliceObject textureObj
-            #yuck
-            vec3.scale pixelData.vectors[0], pixelData.width
-            vec3.scale pixelData.vectors[1], pixelData.height
-            vec3.scale pixelData.vectors[2], pixelData.depth
-            slice.matrix = _makeMat4 pixelData.vectors
-            widget.slices.push slice
-            bindSliceControls widget, slice, idx
-        # xy
-        makeSlice 0, ((x) -> x), ((y) -> y)
-        # yz
-        makeSlice 1, swizzleYZX, swizzleZXY
-        # zx
-        makeSlice 2, swizzleZXY, swizzleYZX
+        try
+            widget.slices = []
+            makeSlice = (idx, swizzle, unswizzle, matrix) ->
+                pixelData = TextureObject::unpackTextureData data, swizzle, unswizzle
+                textureObj = TextureObject::makeTexture2dFromData widget, pixelData
+                slice = new SliceObject textureObj
+                #yuck
+                vec3.scale pixelData.vectors[0], pixelData.width
+                vec3.scale pixelData.vectors[1], pixelData.height
+                vec3.scale pixelData.vectors[2], pixelData.depth
+                slice.matrix = _makeMat4 pixelData.vectors
+                widget.slices.push slice
+                bindSliceControls widget, slice, idx
+            # xy
+            makeSlice 0, ((x) -> x), ((y) -> y)
+            # yz
+            makeSlice 1, swizzleYZX, swizzleZXY
+            # zx
+            makeSlice 2, swizzleZXY, swizzleYZX
 
-        pts = []
-        for i in [-1, 1]
-            for j in [-1, 1]
-                for k in [-1, 1]
-                    pts.push mat4.multiplyVec3 widget.slices[0].matrix, [i, j, k]
+            pts = []
+            for i in [-1, 1]
+                for j in [-1, 1]
+                    for k in [-1, 1]
+                        pts.push mat4.multiplyVec3 widget.slices[0].matrix, [i, j, k]
 
-        widget.camera.zoomToFit pts
-        widget.draw()
+            widget.camera.zoomToFit pts
+            widget.draw()
+            setStatus "Loaded"
+        catch msg
+            setStatus msg, true
 
     load_url = (url) ->
+        setStatus "Fetching data..."
         $.ajax url,
             type: 'GET',
             beforeSend: (xhr, settings) ->
@@ -385,6 +396,8 @@ $ ->
                 widget.draw()
 
     $('#load-file').fileWidget
+        beforeRead: ->
+            setStatus "Reading..."
         processFile : (data) ->
             load_data widget, data
 

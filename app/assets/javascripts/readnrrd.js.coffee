@@ -9,11 +9,12 @@ exports ?= this
 class NrrdReader
 
     error: (msg) ->
+        throw msg
 
     fieldFunctions :
         'type' : (data) ->
             if data != 'short'
-                @error()
+                @error 'Only short data is allowed'
             @type = data
         'endian' : (data) ->
             @endian = data
@@ -41,7 +42,9 @@ class NrrdReader
         header = @getHeader()
         lines = header.split /\r?\n/
         for l in lines
-            if l.match /^#/
+            if l.match /NRRD\d+/
+                @isNrrd = true
+            else if l.match /^#/
                 # comment
             else if m = l.match /(.*):(.*)/
                 # data
@@ -52,6 +55,13 @@ class NrrdReader
                     fn.call this, data
                 else
                     this[field] = data
+
+        # Some assertions
+        if !@isNrrd
+            @error "Not an NRRD file"
+        if @encoding != 'raw'
+            @error "Only raw encoding is allowed"
+
         # make sure we have some spacing
         if not @vectors?
             @vectors = [

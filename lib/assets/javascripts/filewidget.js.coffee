@@ -3,6 +3,7 @@
 ( ($)->
     $.widget 'mrl.fileWidget',
         options :
+            beforeRead : ->
             processFile : (file) ->
 
         _create: ->
@@ -14,6 +15,7 @@
             fileInput.change (event) ->
                 nfiles = this.files.length
                 if nfiles == 1
+                    self.options.beforeRead()
                     f = this.files[0]
                     freader = new FileReader()
                     freader.onload = (e) ->

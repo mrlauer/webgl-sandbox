@@ -20,6 +20,20 @@ data file: MR-head.raw
 \x34\x0f\x00\x20
 """
 
+notNrrd = """
+type: short
+dimension: 3
+space: left-posterior-superior
+sizes: 256 256 130
+encoding: raw
+"""
+
+badEncoding = """
+NRRD0004
+type: short
+encoding: gzip
+"""
+
 test "simple nrrd reader", ->
     reader = new NrrdReader testData
     ok(reader?, "nrrd reader created")
@@ -33,3 +47,8 @@ test "simple nrrd reader", ->
     equal testData[reader.pos..], '\x34\x0f\x00\x20', 'data position'
     equal reader.getValueFn()(0), 0xf34, 'got int 0'
     equal reader.getValueFn()(1), 0x2000, 'got int 1'
+
+    reader = new NrrdReader notNrrd
+    raises (-> reader.parseHeader()), "Not an nrrd file"
+    reader = new NrrdReader badEncoding
+    raises (-> reader.parseHeader()), "Not an nrrd file"

@@ -6,17 +6,21 @@ $webglsz: 728px;
 $controlsz: 300px;
 $controlpadding: 16px;
 $slidersz: $controlsz * 0.75;
+$defaultFont: Palatino, 'Book Antiqua', serif;
+
+body {
+    font-family: $defaultFont;
+}
 
 h1 {
-    font-family: Palatino, 'Book Antiqua', serif;
     font-style: italic;
     font-weight: normal;
 }
 
 h4 {
-    font-family: Palatino, Bookman, serif;
     font-style: normal;
     font-weight: normal;
+    margin-bottom: 0;
 }
 
 #controls {
@@ -28,6 +32,7 @@ h4 {
 
 .slider-control {
     width: $slidersz;
+    margin-top: 0.5em;
 }
 
 #main {
@@ -66,6 +71,15 @@ $slider_handle_width : 6px;
     margin-left: $slider_handle_width * -0.5;
 }
 
-#load-head {
-    margin-top: 1em;
+.control {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.status {
+    color:black;
+}
+
+.status.error {
+    color:red;
 }
