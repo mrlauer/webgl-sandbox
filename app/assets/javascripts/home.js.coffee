@@ -67,14 +67,18 @@ $ ->
             this.maxrange = 1.0
 
             eye = [4, 4, 4]
-            this.camera = new mrlCamera
-                eye : eye
-                direction : (vec3.normalize [-1, -1, -1]),
-                up : [0, 0, 1],
-                focalDist :  vec3.length eye
-                near : 0.1,
-                far : 20,
-                angle : 30
+            persp = true
+            if persp? and persp
+                this.camera = new mrlCamera
+                    eye : eye
+                    direction : (vec3.normalize [-1, -1, -1]),
+                    up : [0, 0, 1],
+                    focalDist :  vec3.length eye
+                    near : 0.1,
+                    far : 20,
+                    angle : 30
+            else
+                this.camera = new mrlOrthoCamera
 
         draw : drawScene
 
