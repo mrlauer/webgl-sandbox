@@ -18,6 +18,9 @@ end
 
 gem 'jquery-rails'
 
+gem 'hpricot'
+gem 'haml'
+
 gem 'execjs'
 gem 'therubyracer'
 

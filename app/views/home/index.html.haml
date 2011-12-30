@@ -1,0 +1,34 @@
+- content_for :scripts do
+  = javascript_include_tag "home"
+- content_for :shaders do
+  = render :partial => 'texture-vertex-shader'
+  = render :partial => 'texture-fragment-shader', :locals => { :dimension => 2 }
+%h1 BabyBrain
+#controls
+  %h4 Window/Level
+  #window-width-slider.slider-control
+  %h4 X Depth
+  #x-depth-slider.slider-control
+  %h4 Y Depth
+  #y-depth-slider.slider-control
+  %h4 Z Depth
+  #z-depth-slider.slider-control
+  %h4 Load Local File
+  #load-file.control
+  %h4 Load Remote File
+  %div
+    %button#load-head.control Load Head
+  #status.control.status
+#main
+  #webglview
+    %canvas#canvas
+  #viewctrls
+    #viewradio
+      %input#view3d{:checked => "checked", :name => "viewradio", :type => "radio"}/
+      %label{:for => "view3d"} 3D
+      %input#viewX{:name => "viewradio", :type => "radio"}/
+      %label{:for => "viewX"} X
+      %input#viewY{:name => "viewradio", :type => "radio"}/
+      %label{:for => "viewY"} Y
+      %input#viewZ{:name => "viewradio", :type => "radio"}/
+      %label{:for => "viewZ"} Z
