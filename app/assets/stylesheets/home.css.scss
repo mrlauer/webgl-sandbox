@@ -48,6 +48,10 @@ h4 {
     clear:none;
 };
 
+#webglview {
+    height: $webglsz
+}
+
 #canvas {
     position:absolute;
     left:0;
@@ -82,4 +86,8 @@ $slider_handle_width : 6px;
 
 .status.error {
     color:red;
+}
+
+#viewctrls {
+    margin-top: 0.2em;
 }

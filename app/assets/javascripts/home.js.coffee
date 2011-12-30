@@ -10,7 +10,7 @@ $ ->
     # TODO: move this!
 
     vec3.linComb = (vec1, s1, vec2, s2, dest) ->
-    	if(!dest)
+        if(!dest)
             dest = vec1
         dest[0] = vec1[0] * s1 + vec2[0] * s2
         dest[1] = vec1[1] * s1 + vec2[1] * s2
@@ -67,9 +67,9 @@ $ ->
             this.maxrange = 1.0
 
             eye = [4, 4, 4]
-            persp = true
-            if persp? and persp
-                this.camera = new mrlCamera
+
+            @cameras =
+                ThreeD : new mrlCamera
                     eye : eye
                     direction : (vec3.normalize [-1, -1, -1]),
                     up : [0, 0, 1],
@@ -77,8 +77,15 @@ $ ->
                     near : 0.1,
                     far : 20,
                     angle : 30
-            else
-                this.camera = new mrlOrthoCamera
+                X : new mrlOrthoCamera
+                    direction : [-1, 0, 0]
+                    up : [0, 0, 1],
+                Y : new mrlOrthoCamera
+                    direction : [0, -1, 0]
+                    up : [0, 0, 1],
+                Z : new mrlOrthoCamera
+
+            @camera = @cameras.ThreeD
 
         draw : drawScene
 
@@ -374,7 +381,8 @@ $ ->
                     for k in [-1, 1]
                         pts.push mat4.multiplyVec3 widget.slices[0].matrix, [i, j, k]
 
-            widget.camera.zoomToFit pts
+            for own key, c of widget.cameras
+                c.zoomToFit pts
             widget.draw()
             setStatus "Loaded"
         catch msg
@@ -427,3 +435,13 @@ $ ->
         processFile : (data) ->
             load_data widget, data
 
+    widget.setView = (view) ->
+        # set up an appropriate camera
+        widget.camera = widget.cameras[view]
+        widget.draw()
+
+    $('#viewradio').buttonset()
+    $('#view3d').click( -> widget.setView "ThreeD" )
+    $('#viewX').click( -> widget.setView "X" )
+    $('#viewY').click( -> widget.setView "Y" )
+    $('#viewZ').click( -> widget.setView "Z" )
