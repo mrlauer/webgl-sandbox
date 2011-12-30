@@ -168,10 +168,7 @@ $ ->
         unpackInt : (string, idx) ->
             return (string.charCodeAt(idx) & 0xff) * 256 + (string.charCodeAt(idx+1) & 0xff)
 
-        unpackTextureData : (data, swizzle = ( (x) -> x ), unswizzle = (x) -> x ) ->
-            len = data.length
-            reader = new NrrdReader(data)
-            reader.parseHeader()
+        unpackTextureData : (reader, swizzle = ( (x) -> x ), unswizzle = (x) -> x ) ->
             unpackInt = reader.getValueFn()
             widthIn = reader.sizes[0]
             heightIn = reader.sizes[1]
@@ -209,7 +206,7 @@ $ ->
                 width : width,
                 height : height,
                 depth : depth,
-                vectors : vectors
+                vectors : vec3.create(v) for v in vectors
                 pixels : pixels,
                 pixelsHigh : pixelsHigh
             }
@@ -299,20 +296,6 @@ $ ->
             gl.drawArrays gl.TRIANGLE_STRIP, 0, widget.positionBuffer.numItems
             widget.popmv()
 
-    yzMatrix = ->
-        return mat4.create [
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            1, 0, 0, 0,
-            0, 0, 0, 1]
-
-    zxMatrix = ->
-        return mat4.create [
-            0, 0, 1, 0,
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 0, 1]
-
     swizzleYZX = ([x, y, z]) -> [y, z, x]
     swizzleZXY = ([x, y, z]) -> [z, x, y]
 
@@ -322,28 +305,64 @@ $ ->
             vecs[1][0], vecs[1][1], vecs[1][2], 0,
             vecs[2][0], vecs[2][1], vecs[2][2], 0,
             0, 0, 0, 1 ]
+
+    # Figure out which coordinate is x, y, z
+    _guessCoords = (vecs) ->
+        zvec = [0, 0, 1]
+        xvec = [1, 0, 0]
+        bestz = 2
+        bestd = -Infinity
+        for v, i in vecs
+            d = Math.abs(vec3.dot(v, zvec) / vec3.length(v))
+            if d > bestd
+                bestz = i
+                bestd = d
+        bestx = 0
+        bestd = -Infinity
+        for v, i in vecs
+            d = Math.abs(vec3.dot(v, xvec) / vec3.length(v))
+            if i != bestz and d > bestd
+                bestx = i
+                bestd = d
+        # silly little hack!
+        besty = 3 - bestx - bestz
+        result = []
+        result[bestx] = 0
+        result[besty] = 1
+        result[bestz] = 2
+        return result
+
+    _xyzVec = (i) ->
+        v = [0, 0, 0]
+        v[i] = 1
+        return v
         
     # get data
     load_data = (widget, data) ->
         try
             widget.slices = []
+            reader = new NrrdReader(data)
+            reader.parseHeader()
             makeSlice = (idx, swizzle, unswizzle, matrix) ->
-                pixelData = TextureObject::unpackTextureData data, swizzle, unswizzle
+                pixelData = TextureObject::unpackTextureData reader, swizzle, unswizzle
                 textureObj = TextureObject::makeTexture2dFromData widget, pixelData
                 slice = new SliceObject textureObj
                 #yuck
                 vec3.scale pixelData.vectors[0], pixelData.width
                 vec3.scale pixelData.vectors[1], pixelData.height
                 vec3.scale pixelData.vectors[2], pixelData.depth
+                if vec3.dot(pixelData.vectors[2], _xyzVec(idx)) < 0
+                    slice.flipped = true
                 slice.matrix = _makeMat4 pixelData.vectors
                 widget.slices.push slice
                 bindSliceControls widget, slice, idx
+            xyz = _guessCoords(reader.vectors)
             # xy
-            makeSlice 0, ((x) -> x), ((y) -> y)
+            makeSlice xyz[2], ((x) -> x), ((y) -> y)
             # yz
-            makeSlice 1, swizzleYZX, swizzleZXY
+            makeSlice xyz[0], swizzleYZX, swizzleZXY
             # zx
-            makeSlice 2, swizzleZXY, swizzleYZX
+            makeSlice xyz[1], swizzleZXY, swizzleYZX
 
             pts = []
             for i in [-1, 1]
@@ -383,7 +402,7 @@ $ ->
             widget.draw()
 
     bindSliceControls = (widget, slice, idx) ->
-        coord = ['z', 'x', 'y'][idx]
+        coord = ['x', 'y', 'z'][idx]
         depthSliderSelector = "##{coord}-depth-slider"
         $(depthSliderSelector).slider('destroy')
         $(depthSliderSelector).slider
@@ -393,6 +412,9 @@ $ ->
             value : 0.5
             slide : (event, ui) ->
                 slice.level = ui.value
+                # this might belong inside the slice, not the ui!
+                if slice.flipped
+                    slice.level = 1-slice.level
                 widget.draw()
 
     $('#load-file').fileWidget
