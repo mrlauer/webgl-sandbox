@@ -1,6 +1,8 @@
 set :application, "babybrain"
 set :repository,  "git://github.com/mrlauer/webgl-sandbox.git"
 
+require "bundler/capistrano"
+
 set :scm, :git
 # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
 
