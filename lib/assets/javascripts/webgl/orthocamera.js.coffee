@@ -70,6 +70,9 @@ class mrlOrthoCamera
                 max[i] = Math.max max[i], pt[i]
                 min[i] = Math.min min[i], pt[i]
         ct = vec3.lerp max, min, 0.5, [0, 0, 0]
+        # fudge near/far a bit. Why does it have to be so much? Somthing doesn't seem right.
+        min[2] -= 2
+        max[2] += 2
         [@left, @bottom, @near] = (min[i] - ct[i] for i in [0..2])
         [@right, @top, @far] = (max[i] - ct[i] for i in [0..2])
         @center = [0, 0, 0]
