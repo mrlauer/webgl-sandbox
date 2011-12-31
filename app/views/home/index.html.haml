@@ -23,7 +23,7 @@
   #webglview
     %canvas#canvas
   #viewctrls
-    #viewradio
+    %span#viewradio
       %input#view3d{:checked => "checked", :name => "viewradio", :type => "radio"}/
       %label{:for => "view3d"} 3D
       %input#viewX{:name => "viewradio", :type => "radio"}/
@@ -32,3 +32,9 @@
       %label{:for => "viewY"} Y
       %input#viewZ{:name => "viewradio", :type => "radio"}/
       %label{:for => "viewZ"} Z
+    -# %span#viewMouse
+      -# %input#viewRotate{:checked => "checked", :name => "viewMouse", :type => "radio"}/
+      -# %label{:for => "viewRotate"} Rotate
+      -# %input#viewPan{:name => "viewMouse", :type => "radio"}/
+      -# %label{:for => "viewPan"} Pan
+    %button#viewReset Reset

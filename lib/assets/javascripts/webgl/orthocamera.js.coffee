@@ -4,17 +4,18 @@ exports ?= this
 
 class mrlOrthoCamera
     constructor: (options) ->
-        @center = [0, 0, 0]
-        @direction = [0, 0, -1]
-        @up = [0, 1, 0]
-        @left = -1
-        @right = -1
-        @top = 1
-        @bottom = -1
-        @near = -1
-        @far = -1
-        if options
-            $.extend this, options
+        $.extend this, @defaults(), options
+
+    defaults: ->
+        center : [0, 0, 0]
+        direction : [0, 0, -1]
+        up : [0, 1, 0]
+        left : -1
+        right : 1
+        top : 1
+        bottom : -1
+        near : -1
+        far : 1
 
     focalPoint: =>
         @center

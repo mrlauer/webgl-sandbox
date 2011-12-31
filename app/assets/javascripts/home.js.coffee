@@ -5,6 +5,7 @@
 #= require webgl
 #= require readnrrd
 #= require filewidget
+#= require viewcontroller
 
 $ ->
     # TODO: move this!
@@ -40,7 +41,7 @@ $ ->
 
         mat4.identity this.mvMatrix
         mat4.identity this.pMatrix
-        this.camera.setMatrices this
+        this.controller.camera.setMatrices this
 
         this.setupShader = ->
             shaderProgram = this.shaderProgram
@@ -68,8 +69,8 @@ $ ->
 
             eye = [4, 4, 4]
 
-            @cameras =
-                ThreeD : new mrlCamera
+            @controllers =
+                ThreeD : new PerspectiveController
                     eye : eye
                     direction : (vec3.normalize [-1, -1, -1]),
                     up : [0, 0, 1],
@@ -77,15 +78,15 @@ $ ->
                     near : 0.1,
                     far : 20,
                     angle : 30
-                X : new mrlOrthoCamera
+                X : new OrthoController
                     direction : [-1, 0, 0]
                     up : [0, 0, 1],
-                Y : new mrlOrthoCamera
+                Y : new OrthoController
                     direction : [0, -1, 0]
                     up : [0, 0, 1],
-                Z : new mrlOrthoCamera
+                Z : new OrthoController
 
-            @camera = @cameras.ThreeD
+            @controller = @controllers.ThreeD
 
         draw : drawScene
 
@@ -93,7 +94,7 @@ $ ->
     $('#canvas').dragHelper
         onDrag : (e, delx, dely) ->
             widget = $(this.element).data('mrlgl')
-            camera = widget.camera
+            camera = widget.controller.camera
             mat4.identity(widget.pMatrix)
             mat4.identity(widget.mvMatrix)
             helper = new ViewHelper(widget)
@@ -381,8 +382,9 @@ $ ->
                     for k in [-1, 1]
                         pts.push mat4.multiplyVec3 widget.slices[0].matrix, [i, j, k]
 
-            for own key, c of widget.cameras
-                c.zoomToFit pts
+            for own key, c of widget.controllers
+                c.setPoints pts
+                c.camera.zoomToFit pts
             widget.draw()
             setStatus "Loaded"
         catch msg
@@ -437,7 +439,7 @@ $ ->
 
     widget.setView = (view) ->
         # set up an appropriate camera
-        widget.camera = widget.cameras[view]
+        widget.controller = widget.controllers[view]
         widget.draw()
 
     $('#viewradio').buttonset()
@@ -445,3 +447,8 @@ $ ->
     $('#viewX').click( -> widget.setView "X" )
     $('#viewY').click( -> widget.setView "Y" )
     $('#viewZ').click( -> widget.setView "Z" )
+    $('#viewMouse').buttonset()
+    $('#viewReset').button().click( ->
+        widget.controller.reset()
+        widget.draw()
+    )
