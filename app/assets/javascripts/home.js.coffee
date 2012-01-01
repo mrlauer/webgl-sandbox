@@ -92,6 +92,13 @@ $ ->
 
 
     $('#canvas').dragHelper
+        onStart: (e) ->
+            ctrlType = viewMouse()
+            @rotate = false
+            @pan = false
+            @zoom = false
+            this[ctrlType] = true
+
         onDrag : (e, delx, dely) ->
             widget = $(this.element).data('mrlgl')
             camera = widget.controller.camera
@@ -112,18 +119,32 @@ $ ->
             axis = [dely, delx, 0]
             angle = - vec3.length(axis) / sz * Math.PI
             
-            orbit = true
-            if(orbit)
-                # Turn that axis into a model vector in the plane of the focalpoint
-                # Seems a lot more work than it should!
-                screenPt = helper.modelToScreen(camera.focalPoint())
-                otherScreenPt = [screenPt.pageX - dely, screenPt.pageY + delx]
-                otherScreenRay = helper.screenToRay(screenPt.pageX - dely, screenPt.pageY + delx)
-                focalPlane = helper.screenPlaneThrough(camera.focalPoint())
-                otherModelPoint = helper.intersectRayPlane(otherScreenRay, focalPlane)
-                modelAxis = vec3.normalize(vec3.subtract(otherModelPoint, camera.focalPoint()))
-                
-                camera.rotateAbout(-angle, modelAxis, camera.focalPoint())
+            if @pan
+                delta = deltaInFocalPlane.call this
+                # do the pan
+                vec3.subtract camera.eye, delta
+            
+            else if @rotate
+                orbit = true
+                if(orbit)
+                    # Turn that axis into a model vector in the plane of the focalpoint
+                    # Seems a lot more work than it should!
+                    screenPt = helper.modelToScreen(camera.focalPoint())
+                    otherScreenPt = [screenPt.pageX - dely, screenPt.pageY + delx]
+                    otherScreenRay = helper.screenToRay(screenPt.pageX - dely, screenPt.pageY + delx)
+                    focalPlane = helper.screenPlaneThrough(camera.focalPoint())
+                    otherModelPoint = helper.intersectRayPlane(otherScreenRay, focalPlane)
+                    modelAxis = vec3.normalize(vec3.subtract(otherModelPoint, camera.focalPoint()))
+                    
+                    camera.rotateAbout(-angle, modelAxis, camera.focalPoint())
+
+            else if @zoom
+                delta = deltaInFocalPlane.call this
+                dot = vec3.dot delta, camera.up
+                dist = dot/Math.tan(camera.angle / 2)
+                camera.dolly dist
+                camera.setNearFar()
+
             widget.draw()
     
 
@@ -452,3 +473,7 @@ $ ->
         widget.controller.reset()
         widget.draw()
     )
+
+    viewMouse = ->
+        $("#viewMouse input[type='radio'][name='viewMouse']:checked").val()
+
