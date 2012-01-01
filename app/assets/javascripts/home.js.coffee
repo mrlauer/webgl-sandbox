@@ -108,8 +108,9 @@ $ ->
             helper = new ViewHelper(widget)
             camera.setMatrices(helper)
             
+            focalPlane = helper.screenPlaneThrough(camera.focalPoint())
+
             deltaInFocalPlane = ->
-                focalPlane = helper.screenPlaneThrough(camera.focalPoint())
                 oldPt = helper.screenToModel(this.lastX, this.lastY, focalPlane)
                 pt = helper.screenToModel(this.lastX+delx, this.lastY+dely, focalPlane)
                 vec3.subtract(pt, oldPt)
@@ -140,9 +141,15 @@ $ ->
                     controller.rotateAbout(-angle, modelAxis, camera.focalPoint())
 
             else if @zoom
+                # figure out the distance in model coords from top to bottom of the window
+                pt0 = helper.screenToModel this.lastX, 0, focalPlane
+                pt1 = helper.screenToModel this.lastX, @element.height(), focalPlane
+                scrDelta = vec3.subtract pt1, pt0, vec3.create()
+                modelHeight = Math.abs vec3.dot scrDelta, camera.up
+
                 delta = deltaInFocalPlane.call this
                 dot = vec3.dot delta, camera.up
-                controller.zoom dot
+                controller.zoom dot, modelHeight
 
             widget.draw()
     

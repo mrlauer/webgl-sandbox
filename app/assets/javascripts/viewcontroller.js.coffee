@@ -30,6 +30,7 @@ class ViewController
         
     zoom: (distMoved, distNorm) ->
 
+
 class PerspectiveController extends ViewController
     constructor: (cameraOptions) ->
         super cameraOptions
@@ -47,6 +48,7 @@ class PerspectiveController extends ViewController
         camera.dolly dist
         camera.setNearFar()
 
+
 class OrthoController extends ViewController
     constructor: (cameraOptions) ->
         super cameraOptions
@@ -54,6 +56,12 @@ class OrthoController extends ViewController
 
     pan: (delta) ->
         vec3.subtract @camera.center, delta
+
+    zoom: (distMoved, distNorm) ->
+        factor = Math.pow 2, (distMoved/distNorm)
+        for c in ['left', 'right', 'top', 'bottom']
+            @camera[c] *= factor
+
 
 exports.ViewController = ViewController
 exports.PerspectiveController = PerspectiveController
