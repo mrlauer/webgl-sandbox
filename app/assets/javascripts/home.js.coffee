@@ -101,6 +101,7 @@ $ ->
 
         onDrag : (e, delx, dely) ->
             widget = $(this.element).data('mrlgl')
+            controller = widget.controller
             camera = widget.controller.camera
             mat4.identity(widget.pMatrix)
             mat4.identity(widget.mvMatrix)
@@ -136,7 +137,7 @@ $ ->
                     otherModelPoint = helper.intersectRayPlane(otherScreenRay, focalPlane)
                     modelAxis = vec3.normalize(vec3.subtract(otherModelPoint, camera.focalPoint()))
                     
-                    camera.rotateAbout(-angle, modelAxis, camera.focalPoint())
+                    controller.rotateAbout(-angle, modelAxis, camera.focalPoint())
 
             else if @zoom
                 delta = deltaInFocalPlane.call this

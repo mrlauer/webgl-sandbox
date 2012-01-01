@@ -23,6 +23,10 @@ class ViewController
 
     setPoints: (points) =>
         @points = points
+
+    rotateAbout (angle, axis, center) ->
+
+    pan (vec) ->
         
 
 class PerspectiveController extends ViewController
@@ -30,10 +34,19 @@ class PerspectiveController extends ViewController
         super cameraOptions
         @camera = new mrlCamera cameraOptions
 
+    rotateAbout (angle, axis, center) ->
+        @camera.rotateAbout angle, axis, center
+
+    pan (delta) ->
+        vec3.subtract @camera.eye, delta
+
 class OrthoController extends ViewController
     constructor: (cameraOptions) ->
         super cameraOptions
         @camera = new mrlOrthoCamera cameraOptions
+
+    pan (delta) ->
+        vec3.subtract @camera.center, delta
 
 exports.ViewController = ViewController
 exports.PerspectiveController = PerspectiveController
