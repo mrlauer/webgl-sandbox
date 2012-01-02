@@ -152,7 +152,23 @@ $ ->
                 controller.zoom dot, modelHeight
 
             widget.draw()
-    
+
+    # zoom on wheel.
+    # TODO: combine with draghelper, maybe
+    $("#canvas").mousewheel (e, delta) ->
+        widget = $(this).data('mrlgl')
+        controller = widget.controller
+        camera = widget.controller.camera
+        mat4.identity(widget.pMatrix)
+        mat4.identity(widget.mvMatrix)
+        helper = new ViewHelper(widget)
+        camera.setMatrices(helper)
+        
+        focalPlane = helper.screenPlaneThrough(camera.focalPoint())
+        screenRay = helper.screenToRay e.pageX, e.pageY
+        modelPt = helper.intersectRayPlane screenRay, focalPlane
+        controller.zoomPoint widget, modelPt, screenRay, delta
+        widget.draw()
 
     # texture-making functions
     makeTexture2d = (gl, maxval, height, width, data) ->

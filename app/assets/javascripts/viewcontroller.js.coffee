@@ -30,6 +30,8 @@ class ViewController
         
     zoom: (distMoved, distNorm) ->
 
+    zoomPoint: (widget, point, ray, delta) ->
+
 
 class PerspectiveController extends ViewController
     constructor: (cameraOptions) ->
@@ -48,6 +50,13 @@ class PerspectiveController extends ViewController
         camera.dolly dist
         camera.setNearFar()
 
+    zoomPoint: (widget, point, ray, delta) ->
+        # move the eye along the ray
+        camera = @camera
+        dist = camera.focalDist * delta / 6
+        camera.dollyAlong dist, ray.direction
+        camera.setNearFar()
+
 
 class OrthoController extends ViewController
     constructor: (cameraOptions) ->
@@ -61,6 +70,18 @@ class OrthoController extends ViewController
         factor = Math.pow 2, (distMoved/distNorm)
         for c in ['left', 'right', 'top', 'bottom']
             @camera[c] *= factor
+
+    zoomPoint: (widget, point, ray, delta) ->
+        factor = Math.pow 2, (delta / 6)
+        delvec = vec3.subtract point, @camera.focalPoint(), vec3.create()
+        rtvec = vec3.cross @camera.direction, @camera.up, vec3.create()
+        xdel = vec3.dot delvec, rtvec
+        ydel = vec3.dot delvec, @camera.up
+        [left, right, top, bottom] = @camera.getEffectiveBounds widget
+        @camera.left = (left - xdel) * factor + xdel
+        @camera.right = (right - xdel) * factor + xdel
+        @camera.top = (top - ydel) * factor + ydel
+        @camera.bottom = (bottom - ydel) * factor + ydel
 
 
 exports.ViewController = ViewController

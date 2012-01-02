@@ -20,6 +20,23 @@ class mrlOrthoCamera
     focalPoint: =>
         @center
 
+    getEffectiveBounds: (widget) =>
+        gl = widget.gl
+        viewAspect = gl.viewportWidth / gl.viewportHeight
+        width = @right - @left
+        height = @top - @bottom
+        cameraAspect = width / height
+        [left, right, top, bottom] = [@left, @right, @top, @bottom]
+        if viewAspect >= cameraAspect
+            # fit the height, need to shrink the width
+            left *= viewAspect / cameraAspect
+            right *= viewAspect / cameraAspect
+        else
+            # fit the width, need to shrink the height
+            top *= cameraAspect / viewAspect
+            bottom *= cameraAspect / viewAspect
+        return [left, right, top, bottom]
+
     setMatrices: (widget, reset) =>
         mvMatrix = widget.mvMatrix
         pMatrix = widget.pMatrix
@@ -35,20 +52,8 @@ class mrlOrthoCamera
         mat4.lookAt eye, focus, @up, mvMatrix
 
         # avoid stretching
-        viewAspect = gl.viewportWidth / gl.viewportHeight
-        width = @right - @left
-        height = @top - @bottom
-        cameraAspect = width / height
-        [left, right, top, bottom] = [@left, @right, @top, @bottom]
-        if viewAspect >= cameraAspect
-            # fit the height, need to shrink the width
-            left *= viewAspect / cameraAspect
-            right *= viewAspect / cameraAspect
-        else
-            # fit the width, need to shrink the height
-            top *= cameraAspect / viewAspect
-            bottom *= cameraAspect / viewAspect
-            
+        [left, right, top, bottom] = @getEffectiveBounds widget
+
         mat4.ortho left, right, bottom, top, @near, @far, pMatrix
 
     rotateAbout: (angle, axis, center) =>
