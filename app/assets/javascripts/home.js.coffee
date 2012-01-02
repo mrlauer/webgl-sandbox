@@ -38,6 +38,8 @@ $ ->
         gl = this.gl
         gl.viewport 0, 0, gl.viewportWidth, gl.viewportHeight
         gl.clear (gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+        gl.enable(gl.BLEND)
 
         mat4.identity this.mvMatrix
         mat4.identity this.pMatrix
@@ -66,6 +68,8 @@ $ ->
             this.gl.enable this.gl.DEPTH_TEST
             this.minrange = 0.0
             this.maxrange = 1.0
+            this.minthreshold = 0.0
+            this.maxthreshold = 1.0
 
             eye = [4, 4, 4]
 
@@ -340,6 +344,8 @@ $ ->
 
             widget.uniform1f('uMin', widget.minrange)
             widget.uniform1f('uMax', widget.maxrange)
+            widget.uniform1f('uMinThreshold', widget.minthreshold)
+            widget.uniform1f('uMaxThreshold', widget.maxthreshold)
 
             widget.uniform1f 'uMaxLimit', texture.getMaxLimit()
             texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
@@ -447,6 +453,9 @@ $ ->
     $('#load-head').click ->
         load_url '/headData'
 
+    _sliderValues = (slider, ui) ->
+        return ui.values
+
     $('#window-width-slider').slider
         min : 0
         max : 1
@@ -454,8 +463,17 @@ $ ->
         values : [0, 1]
         range : true
         slide : (event, ui) ->
-            widget.minrange = $(this).slider('values', 0)
-            widget.maxrange = $(this).slider('values', 1)
+            [widget.minrange, widget.maxrange] = _sliderValues $(this).slider, ui
+            widget.draw()
+
+    $('#threshold-slider').slider
+        min : 0
+        max : 1
+        step : 0.01
+        values : [0, 1]
+        range : true
+        slide : (event, ui) ->
+            [widget.minthreshold, widget.maxthreshold] = _sliderValues $(this).slider, ui
             widget.draw()
 
     bindSliceControls = (widget, slice, idx) ->
