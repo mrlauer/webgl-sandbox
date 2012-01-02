@@ -8,3 +8,4 @@
 //= require jquery_ujs
 //= require jquery-ui
 //= require jquery-mousewheel
+//= require jquery-dragslider.js

@@ -456,22 +456,24 @@ $ ->
     _sliderValues = (slider, ui) ->
         return ui.values
 
-    $('#window-width-slider').slider
+    $('#window-width-slider').dragslider
         min : 0
         max : 1
         step : 0.01
         values : [0, 1]
         range : true
+        rangeDrag : true
         slide : (event, ui) ->
             [widget.minrange, widget.maxrange] = _sliderValues $(this).slider, ui
             widget.draw()
 
-    $('#threshold-slider').slider
+    $('#threshold-slider').dragslider
         min : 0
         max : 1
         step : 0.01
         values : [0, 1]
         range : true
+        rangeDrag : true
         slide : (event, ui) ->
             [widget.minthreshold, widget.maxthreshold] = _sliderValues $(this).slider, ui
             widget.draw()
