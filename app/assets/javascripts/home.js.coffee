@@ -51,8 +51,32 @@ $ ->
 
         this.setupShader()
 
-        for slice in @slices
-            slice.draw this
+        real3d = true
+        if real3d
+            widget.uniform1i 'uMultiple', true
+            # figure out which set to draw, and which order to draw in
+            bestd = -Infinity
+            flip = false
+            dir = @controller.camera.direction
+            bestSlice = null
+            for s in @slices
+                n = s.normal()
+                d = vec3.dot dir, n
+                absd = Math.abs d
+                if absd > bestd
+                    bestd = absd
+                    bestSlice = s
+                    flip = (d > 0)
+            # Draw the slice at many depths
+            depth = bestSlice.textureObj.depth
+            for i in [0...depth]
+                idx = if flip then depth-1-i else i
+                level = idx / (depth-1)
+                bestSlice.draw this, level
+        else
+            widget.uniform1i 'uMultiple', false
+            for slice in @slices
+                slice.draw this
 
     widget = null
     $('#canvas').mrlgl
@@ -64,7 +88,8 @@ $ ->
             this.uvBuffer = this.gl.createBuffer()
             this.enableVertexAttribArray("aUV", false)
             this.enableVertexAttribArray("aVertexPosition")
-            this.gl.clearColor 0.75, 0.75, 0.75, 1
+#             this.gl.clearColor 0.75, 0.75, 0.75, 1
+            this.gl.clearColor 0, 0, 0, 1
             this.gl.enable this.gl.DEPTH_TEST
             this.minrange = 0.0
             this.maxrange = 1.0
@@ -306,7 +331,13 @@ $ ->
         constructor : (@textureObj) ->
             @level = 0.5
 
-        draw : (widget) ->
+        normal : () ->
+            v = [0, 0, 1, 0]
+            mat4.multiplyVec4 @matrix, v
+            return v
+
+        draw : (widget, level) ->
+            level ?= @level
             gl = widget.gl
             texture = @textureObj
             bds =
@@ -315,7 +346,7 @@ $ ->
                 top : 1
                 bottom : -1
 
-            z = -1 + 2 * @level 
+            z = -1 + 2 * level
             vertices = [
                 bds.left, bds.bottom, z,
                 bds.right, bds.bottom, z,
@@ -328,7 +359,7 @@ $ ->
                 0, 0, 1,
                 0, 0, 1
             ]
-            [u0, v0, u1, v1] = texture.getUVOffsets Math.round(@level * (texture.depth-1))
+            [u0, v0, u1, v1] = texture.getUVOffsets Math.round(level * (texture.depth-1))
             uvs = [
                 u0, v0
                 u1, v0,

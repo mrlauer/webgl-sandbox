@@ -9,6 +9,8 @@
     uniform sampler2D uTextureLow;
     uniform sampler2D uTextureHigh;
 
+    uniform bool uMultiple;
+
     uniform float uMaxLimit;
     uniform float uMax;
     uniform float uMin;
@@ -30,6 +32,10 @@
         vec3 maxrange = vec3(uMax, uMax, uMax);
         vec3 fac = maxrange - minrange;
         light = (light - minrange) / fac;
+
+        if (uMultiple && alpha != 0.0) {
+            alpha = light.r;
+        }
  
         gl_FragColor = vec4(light, alpha);
     }
