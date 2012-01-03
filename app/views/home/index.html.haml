@@ -25,20 +25,27 @@
   #webglview
     %canvas#canvas
   #viewctrls
-    %span#viewradio
-      %input#view3d{:checked => "checked", :name => "viewradio", :type => "radio"}/
-      %label{:for => "view3d"} 3D
-      %input#viewX{:name => "viewradio", :type => "radio"}/
-      %label{:for => "viewX"} X
-      %input#viewY{:name => "viewradio", :type => "radio"}/
-      %label{:for => "viewY"} Y
-      %input#viewZ{:name => "viewradio", :type => "radio"}/
-      %label{:for => "viewZ"} Z
-    %span#viewMouse
-      %input#viewRotate{:checked => "checked", :name => "viewMouse", :type => "radio", :value => "rotate"}/
-      %label{:for => "viewRotate"} Rotate
-      %input#viewPan{:name => "viewMouse", :type => "radio", :value => "pan"}/
-      %label{:for => "viewPan"} Pan
-      %input#viewZoom{:name => "viewMouse", :type => "radio", :value => "zoom"}/
-      %label{:for => "viewZoom"} Zoom
-    %button#viewReset Reset
+    %div
+      %span#viewradio
+        %input#view3d{:checked => "checked", :name => "viewradio", :type => "radio"}/
+        %label{:for => "view3d"} 3D
+        %input#viewX{:name => "viewradio", :type => "radio"}/
+        %label{:for => "viewX"} X
+        %input#viewY{:name => "viewradio", :type => "radio"}/
+        %label{:for => "viewY"} Y
+        %input#viewZ{:name => "viewradio", :type => "radio"}/
+        %label{:for => "viewZ"} Z
+      %span#viewMouse
+        %input#viewRotate{:checked => "checked", :name => "viewMouse", :type => "radio", :value => "rotate"}/
+        %label{:for => "viewRotate"} Rotate
+        %input#viewPan{:name => "viewMouse", :type => "radio", :value => "pan"}/
+        %label{:for => "viewPan"} Pan
+        %input#viewZoom{:name => "viewMouse", :type => "radio", :value => "zoom"}/
+        %label{:for => "viewZoom"} Zoom
+      %button#viewReset Reset
+    %div
+      %span#viewType
+        %input#viewSlices{:checked => "checked", :type => "radio", :name => "viewType", :value => "slices"}/
+        %label{:for => "viewSlices"} Slices
+        %input#viewVol{:type => "radio", :name => "viewType", :value => "volume"}/
+        %label{:for => "viewVol"} Volume

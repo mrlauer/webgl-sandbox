@@ -37,6 +37,13 @@ $ ->
         widget = this
         gl = this.gl
         gl.viewport 0, 0, gl.viewportWidth, gl.viewportHeight
+        # for volume display a black background works best.
+        # for slices it's a little nicer (IMO) gray
+        if @volumeOn
+            this.gl.clearColor 0, 0, 0, 1
+        else
+            this.gl.clearColor 0.75, 0.75, 0.75, 1
+
         gl.clear (gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         gl.enable(gl.BLEND)
@@ -51,8 +58,12 @@ $ ->
 
         this.setupShader()
 
-        real3d = true
-        if real3d
+        if @slicesOn
+            widget.uniform1i 'uMultiple', false
+            for slice in @slices
+                slice.draw this
+
+        if @volumeOn
             widget.uniform1i 'uMultiple', true
             # figure out which set to draw, and which order to draw in
             bestd = -Infinity
@@ -73,10 +84,6 @@ $ ->
                 idx = if flip then depth-1-i else i
                 level = idx / (depth-1)
                 bestSlice.draw this, level
-        else
-            widget.uniform1i 'uMultiple', false
-            for slice in @slices
-                slice.draw this
 
     widget = null
     $('#canvas').mrlgl
@@ -88,13 +95,15 @@ $ ->
             this.uvBuffer = this.gl.createBuffer()
             this.enableVertexAttribArray("aUV", false)
             this.enableVertexAttribArray("aVertexPosition")
-#             this.gl.clearColor 0.75, 0.75, 0.75, 1
-            this.gl.clearColor 0, 0, 0, 1
+            this.gl.clearColor 0.75, 0.75, 0.75, 1
             this.gl.enable this.gl.DEPTH_TEST
             this.minrange = 0.0
             this.maxrange = 1.0
             this.minthreshold = 0.0
             this.maxthreshold = 1.0
+
+            @slicesOn = true
+            @volumesOn = false
 
             eye = [4, 4, 4]
 
@@ -546,6 +555,11 @@ $ ->
         widget.controller.reset()
         widget.draw()
     )
+    $('#viewType').buttonset().on 'change', 'input', (e)->
+        val = $(this).val()
+        widget[a] = false for a in ['slicesOn', 'volumeOn']
+        widget[val + "On"] = $(this).is(':checked')
+        widget.draw()
 
     viewMouse = ->
         $("#viewMouse input[type='radio'][name='viewMouse']:checked").val()
