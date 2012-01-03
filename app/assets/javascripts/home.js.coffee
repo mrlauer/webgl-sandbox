@@ -59,12 +59,13 @@ $ ->
         this.setupShader()
 
         if @slicesOn
-            widget.uniform1i 'uMultiple', false
+            widget.uniform1i 'uMultiple', 0
             for slice in @slices
                 slice.draw this
 
         if @volumeOn
-            widget.uniform1i 'uMultiple', true
+            widget.uniform1i 'uMultiple', 1
+            widget.uniform1f 'uBrightness', @brightness
             # figure out which set to draw, and which order to draw in
             bestd = -Infinity
             flip = false
@@ -101,6 +102,7 @@ $ ->
             this.maxrange = 1.0
             this.minthreshold = 0.0
             this.maxthreshold = 1.0
+            this.brightness = 0.5
 
             @slicesOn = true
             @volumesOn = false
@@ -516,6 +518,33 @@ $ ->
         rangeDrag : true
         slide : (event, ui) ->
             [widget.minthreshold, widget.maxthreshold] = _sliderValues $(this).slider, ui
+            c = (widget.minthreshold + widget.maxthreshold)/2
+            $('#threshold-center-slider').slider 'value', c
+            widget.draw()
+
+    $('#threshold-center-slider').slider
+        min : 0
+        max : 1
+        step : 0.01
+        value : 0.5
+        slide : (event, ui) ->
+            [min, max] = [widget.minthreshold, widget.maxthreshold]
+            hw = (max-min)/2
+            min = Math.max ui.value - hw, 0
+            max = Math.min ui.value + hw, 1
+            widget.minthreshold = min
+            widget.maxthreshold = max
+            $('#threshold-slider').dragslider 'values', 0, min
+            $('#threshold-slider').dragslider 'values', 1, max
+            widget.draw()
+
+    $('#brightness-slider').slider
+        min : 0
+        max : 1
+        step : 0.01
+        value : widget.brightness
+        slide : (event, ui) ->
+            widget.brightness = ui.value
             widget.draw()
 
     bindSliceControls = (widget, slice, idx) ->
