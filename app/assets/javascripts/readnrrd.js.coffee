@@ -13,8 +13,8 @@ class NrrdReader
 
     fieldFunctions :
         'type' : (data) ->
-            if data != 'short'
-                @error 'Only short data is allowed'
+            if data != 'short' && data != 'int'
+                @error 'Only short/int data is allowed'
             @type = data
         'endian' : (data) ->
             @endian = data
@@ -75,14 +75,30 @@ class NrrdReader
     getValueFn : ->
         pos = @pos
         data = @data
-        if @endian == 'big'
-            return (idx) ->
-                iidx = pos + idx*2
-                return (data.charCodeAt(iidx) & 0xff) * 256 + (data.charCodeAt(iidx+1) & 0xff)
-        else
-            return (idx) ->
-                iidx = pos + idx*2
-                return (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
+        if @type == 'short'
+            if @endian == 'big'
+                return (idx) ->
+                    iidx = pos + idx*2
+                    return (data.charCodeAt(iidx) & 0xff) * 256 + (data.charCodeAt(iidx+1) & 0xff)
+            else
+                return (idx) ->
+                    iidx = pos + idx*2
+                    return (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
+        else if @type == 'int'
+            if @endian == 'big'
+                return (idx) ->
+                    iidx = pos + idx*4
+                    return (data.charCodeAt(iidx) & 0xff) * 0x1000000 \
+                        + (data.charCodeAt(iidx+1) & 0xff) * 0x10000 \
+                        + (data.charCodeAt(iidx+2) & 0xff) * 256 \
+                        + (data.charCodeAt(iidx+3) & 0xff)
+            else
+                return (idx) ->
+                    iidx = pos + idx*4
+                    return ((data.charCodeAt(iidx+3) & 0xff) * 0x1000000 \
+                        + (data.charCodeAt(iidx+2) & 0xff) * 0x10000 \
+                        + (data.charCodeAt(iidx+1) & 0xff) * 256 \
+                        + (data.charCodeAt(iidx) & 0xff))
         
 
 exports.NrrdReader = NrrdReader
