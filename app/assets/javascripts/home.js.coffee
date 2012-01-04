@@ -65,7 +65,7 @@ $ ->
 
         if @volumeOn
             widget.uniform1i 'uMultiple', 1
-            widget.uniform1f 'uBrightness', @brightness
+            widget.uniform1f 'uOpacity', @opacity
             # figure out which set to draw, and which order to draw in
             bestd = -Infinity
             flip = false
@@ -102,7 +102,7 @@ $ ->
             this.maxrange = 1.0
             this.minthreshold = 0.0
             this.maxthreshold = 1.0
-            this.brightness = 0.5
+            this.opacity = 0.125
 
             @slicesOn = true
             @volumesOn = false
@@ -538,13 +538,13 @@ $ ->
             $('#threshold-slider').dragslider 'values', 1, max
             widget.draw()
 
-    $('#brightness-slider').slider
+    $('#opacity-slider').slider
         min : 0
-        max : 1
-        step : 0.01
-        value : widget.brightness
+        max : 0.25
+        step : 1/256
+        value : widget.opacity
         slide : (event, ui) ->
-            widget.brightness = ui.value
+            widget.opacity = ui.value
             widget.draw()
 
     bindSliceControls = (widget, slice, idx) ->

@@ -16,7 +16,7 @@
     uniform float uMin;
     uniform float uMaxThreshold;
     uniform float uMinThreshold;
-    uniform float uBrightness;
+    uniform float uOpacity;
  
     void main(void) {
         float alpha = 1.0;
@@ -35,8 +35,7 @@
         light = (light - minrange) / fac;
 
         if (uMultiple && alpha != 0.0) {
-            alpha = uBrightness;
-            light = vec3(uBrightness, uBrightness, uBrightness);
+            alpha = uOpacity;
         }
  
         gl_FragColor = vec4(light, alpha);
