@@ -41,14 +41,12 @@ $ ->
         # for slices it's a little nicer (IMO) gray
         if @volumeOn
             this.gl.clearColor 0, 0, 0, 1
-            $('#canvas').css('background-color', '#000')
         else
             this.gl.clearColor 0.75, 0.75, 0.75, 1
-            $('#canvas').css('background-color', '#bbb')
 
         gl.clear (gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
         gl.enable(gl.BLEND)
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE)
 
         mat4.identity this.mvMatrix
         mat4.identity this.pMatrix
