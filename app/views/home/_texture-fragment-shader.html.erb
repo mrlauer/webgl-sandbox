@@ -39,6 +39,9 @@
         }
  
         gl_FragColor = vec4(light, alpha);
+        if(gl_FragColor.a == 0.0) {
+            discard;
+        }
     }
 </script>
 
