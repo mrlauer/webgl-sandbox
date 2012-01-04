@@ -80,20 +80,17 @@ $ ->
                     bestSlice = s
                     flip = (d > 0)
             # Draw the slice at many depths
-            depth = bestSlice.textureObj.depth
-            for i in [0...depth]
-                idx = if flip then depth-1-i else i
-                level = idx / (depth-1)
-                bestSlice.draw this, level
+            first = 0
+            last = bestSlice.textureObj.depth - 1
+            if flip
+                [first, last] = [last, first]
+            bestSlice.draw this, first, last
 
     widget = null
     $('#canvas').mrlgl
         initialize: ->
             widget = this
             this.initProgram()
-            this.positionBuffer = this.gl.createBuffer()
-            this.normalBuffer = this.gl.createBuffer()
-            this.uvBuffer = this.gl.createBuffer()
             this.enableVertexAttribArray("aUV", false)
             this.enableVertexAttribArray("aVertexPosition")
             this.gl.clearColor 0.75, 0.75, 0.75, 1
@@ -347,42 +344,77 @@ $ ->
             mat4.multiplyVec4 @matrix, v
             return v
 
-        draw : (widget, level) ->
-            level ?= @level
+        createBuffers : (widget) ->
             gl = widget.gl
+            this.positionBuffer ?= gl.createBuffer()
+            this.normalBuffer ?= gl.createBuffer()
+            this.uvBuffer ?= gl.createBuffer()
+            this.indexBuffer ?= gl.createBuffer()
             texture = @textureObj
+            vertices = []
+            normals = []
+            uvs = []
+            indices = []
+
             bds =
                 left : -1
                 right : 1
                 top : 1
                 bottom : -1
 
-            z = -1 + 2 * level
-            vertices = [
-                bds.left, bds.bottom, z,
-                bds.right, bds.bottom, z,
-                bds.left, bds.top, z,
-                bds.right, bds.top, z,
-            ]
-            normals = [
-                0, 0, 1,
-                0, 0, 1,
-                0, 0, 1,
-                0, 0, 1
-            ]
-            [u0, v0, u1, v1] = texture.getUVOffsets Math.round(level * (texture.depth-1))
-            uvs = [
-                u0, v0
-                u1, v0,
-                u0, v1,
-                u1, v1
-            ]
-            widget.setFloatBufferData widget.positionBuffer, vertices, 3
-            widget.setFloatAttribPointer 'aVertexPosition', widget.positionBuffer
-            widget.setFloatBufferData widget.normalBuffer, vertices, 3
-            widget.setFloatAttribPointer 'aVertexNormal', widget.normalBuffer
-            widget.setFloatBufferData widget.uvBuffer, uvs, 2
-            widget.setFloatAttribPointer 'aUV', widget.uvBuffer
+            for i in [0...texture.depth]
+                level = i / (texture.depth - 1)
+                z = -1 + 2 * level
+                vertices.push(
+                    bds.left, bds.bottom, z,
+                    bds.right, bds.bottom, z,
+                    bds.left, bds.top, z,
+                    bds.right, bds.top, z
+                )
+                normals.push(
+                    0, 0, 1,
+                    0, 0, 1,
+                    0, 0, 1,
+                    0, 0, 1
+                )
+                [u0, v0, u1, v1] = texture.getUVOffsets i
+                uvs.push(
+                    u0, v0
+                    u1, v0,
+                    u0, v1,
+                    u1, v1
+                )
+                i6 = i*4
+                indices.push(
+                    i6+0, i6+1, i6+2, i6+2, i6+1, i6+3
+                )
+
+            widget.setFloatBufferData @positionBuffer, vertices, 3
+            widget.setFloatBufferData @normalBuffer, normals, 3
+            widget.setFloatBufferData @uvBuffer, uvs, 2
+            widget.setElementArrayBufferData @indexBuffer, indices
+
+        draw : (widget, first, last) ->
+            gl = widget.gl
+            texture = @textureObj
+            first ?= Math.round(@level * (texture.depth-1))
+            last ?= first
+            if !this.positionBuffer
+                @createBuffers widget
+            widget.setFloatAttribPointer 'aVertexPosition', @positionBuffer
+            widget.setFloatAttribPointer 'aVertexNormal', @normalBuffer
+            widget.setFloatAttribPointer 'aUV', @uvBuffer
+
+            # gin up an index buffer
+            indices = []
+            for i in [first .. last]
+                i4 = i * 4
+                indices.push(
+                    i4, i4+1, i4+2, i4+2, i4+1, i4+3
+                )
+            widget.setElementArrayBufferData @indexBuffer, indices
+
+            gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @indexBuffer
 
             widget.uniform1f('uMin', widget.minrange)
             widget.uniform1f('uMax', widget.maxrange)
@@ -396,7 +428,7 @@ $ ->
             if @matrix?
                 mat4.multiply widget.mvMatrix, @matrix
                 widget.setUniformMatrices 'uMVMatrix', 'uPMatrix', 'uNMatrix'
-            gl.drawArrays gl.TRIANGLE_STRIP, 0, widget.positionBuffer.numItems
+            gl.drawElements gl.TRIANGLES, 6 * (Math.abs(last - first) + 1), gl.UNSIGNED_SHORT, 0
             widget.popmv()
 
     swizzleYZX = ([x, y, z]) -> [y, z, x]
