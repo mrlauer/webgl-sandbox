@@ -70,7 +70,45 @@ class NrrdReader
                 [0, 0, 1]
             ]
 
-
+    makeValueArray : ->
+        sz = 1
+        sz *= s for s in @sizes
+        pos = @pos
+        data = @data
+        arr = null
+        max = 0
+        if @type = 'short'
+            arr = new Int16Array sz
+            if @endian == 'big'
+                for i in [0 ... sz ]
+                    iidx = pos + i*2
+                    arr[i] = (data.charCodeAt(iidx) & 0xff) * 256 + (data.charCodeAt(iidx+1) & 0xff)
+                    max = Math.max max, arr[i]
+            else
+                for i in [0 ... sz ]
+                    iidx = pos + i*2
+                    arr[i] = (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
+                    max = Math.max max, arr[i]
+        else if @type == 'int'
+            arr = Int32Array sz
+            if @endian == 'big'
+                for i in [0 ... sz ]
+                    iidx = pos + i*4
+                    arr[i] = (data.charCodeAt(iidx) & 0xff) * 0x1000000 \
+                        + (data.charCodeAt(iidx+1) & 0xff) * 0x10000 \
+                        + (data.charCodeAt(iidx+2) & 0xff) * 256 \
+                        + (data.charCodeAt(iidx+3) & 0xff)
+                    max = Math.max max, arr[i]
+            else
+                for i in [0 ... sz ]
+                    iidx = pos + i*4
+                    arr[i] = (data.charCodeAt(iidx+3) & 0xff) * 0x1000000 \
+                        + (data.charCodeAt(iidx+2) & 0xff) * 0x10000 \
+                        + (data.charCodeAt(iidx+1) & 0xff) * 256 \
+                        + (data.charCodeAt(iidx) & 0xff)
+                    max = Math.max max, arr[i]
+        @max ?= max
+        return arr
 
     getValueFn : ->
         pos = @pos

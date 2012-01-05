@@ -276,6 +276,8 @@ $ ->
             pixels = new Uint8Array sz
             pixelsHigh = new Uint8Array sz
             maxValue = reader.max ? 255
+            fac = 255/maxValue
+            maxValue = 0
             
             _rowsz = @_rowsz
             rowlen = if depth < _rowsz then depth else _rowsz
@@ -286,7 +288,10 @@ $ ->
                 for i in [0 ... height]
                     for j in [0 ... width]
                         [jIn, iIn, dIn] = unswizzle [j, i, dd]
-                        p = unpackInt ( dIn * heightIn * widthIn + iIn * widthIn + jIn)
+                        p = reader.values[ dIn * heightIn * widthIn + iIn * widthIn + jIn ]
+                        if p < 0 then p = 0
+                        #HACK
+                        p = p * fac
                         if p > maxValue then maxValue = p
                         pixelIdx = (i + yoff * height) * rowlen * width + j + xoff * width
                         pixels[pixelIdx] = p
@@ -324,7 +329,9 @@ $ ->
             obj = new TextureObject
             for p in ['bits', 'height', 'width', 'depth']
                 obj[p] = textureData[p]
+            gl.activeTexture gl.TEXTURE0
             obj.texture = makeTexture textureData.pixels
+            gl.activeTexture gl.TEXTURE1
             obj.textureHigh = makeTexture textureData.pixelsHigh
             return obj
 
@@ -512,6 +519,7 @@ $ ->
             widget.slices = []
             reader = new NrrdReader(data)
             reader.parseHeader()
+            reader.values = reader.makeValueArray()
             makeSlice = (idx, swizzle, unswizzle, matrix) ->
                 startIdx = 0
                 textures = []
