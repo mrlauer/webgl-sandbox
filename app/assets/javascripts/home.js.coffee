@@ -276,8 +276,6 @@ $ ->
             pixels = new Uint8Array sz
             pixelsHigh = new Uint8Array sz
             maxValue = reader.max ? 255
-            fac = 255/maxValue
-            maxValue = 0
             
             _rowsz = @_rowsz
             rowlen = if depth < _rowsz then depth else _rowsz
@@ -290,8 +288,6 @@ $ ->
                         [jIn, iIn, dIn] = unswizzle [j, i, dd]
                         p = reader.values[ dIn * heightIn * widthIn + iIn * widthIn + jIn ]
                         if p < 0 then p = 0
-                        #HACK
-                        p = p * fac
                         if p > maxValue then maxValue = p
                         pixelIdx = (i + yoff * height) * rowlen * width + j + xoff * width
                         pixels[pixelIdx] = p
@@ -325,6 +321,8 @@ $ ->
                     gl.LUMINANCE, gl.UNSIGNED_BYTE, pixels)
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
                 return texture
             obj = new TextureObject
             for p in ['bits', 'height', 'width', 'depth']
