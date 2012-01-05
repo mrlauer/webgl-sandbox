@@ -81,7 +81,7 @@ $ ->
                     flip = (d > 0)
             # Draw the slice at many depths
             first = 0
-            last = bestSlice.textureObj.depth - 1
+            last = bestSlice.depth - 1
             if flip
                 [first, last] = [last, first]
             bestSlice.draw this, first, last
@@ -231,8 +231,11 @@ $ ->
         statusArea.text(msg)
         statusArea.toggleClass('error', err ? false)
 
+    # Represents a SINGLE texture, which may be an array of slices
+    # A slice object may have many of them
     class TextureObject
-        _rowsz : 16
+        _rowsz : 8
+        _maxDepth : 64
 
         constructor : ->
 
@@ -257,15 +260,17 @@ $ ->
             dely = 1 / Math.ceil(depth/rowlen)
             return [dx * delx + ufudge, dy * dely + vfudge, (dx+1) * delx - ufudge, (dy+1) * dely - vfudge]
 
-        unpackInt : (string, idx) ->
-            return (string.charCodeAt(idx) & 0xff) * 256 + (string.charCodeAt(idx+1) & 0xff)
-
-        unpackTextureData : (reader, swizzle = ( (x) -> x ), unswizzle = (x) -> x ) ->
+        unpackTextureData : (startIdx, reader, swizzle = ( (x) -> x ), unswizzle = (x) -> x ) ->
             unpackInt = reader.getValueFn()
             widthIn = reader.sizes[0]
             heightIn = reader.sizes[1]
             depthIn = reader.sizes[2]
             [width, height, depth] = swizzle [widthIn, heightIn, depthIn]
+            depth -= startIdx
+            if depth <= 0
+                return null
+            if depth > @_maxDepth
+                depth = @_maxDepth
             [nrows, rowlen] = @_textureLayout { depth: depth }
             sz = width * height * nrows * rowlen
             pixels = new Uint8Array sz
@@ -277,9 +282,10 @@ $ ->
             for d in [0 ... depth]
                 xoff = d % rowlen
                 yoff = Math.floor(d / _rowsz)
+                dd = d+startIdx
                 for i in [0 ... height]
                     for j in [0 ... width]
-                        [jIn, iIn, dIn] = unswizzle [j, i, d]
+                        [jIn, iIn, dIn] = unswizzle [j, i, dd]
                         p = unpackInt ( dIn * heightIn * widthIn + iIn * widthIn + jIn)
                         if p > maxValue then maxValue = p
                         pixelIdx = (i + yoff * height) * rowlen * width + j + xoff * width
@@ -336,8 +342,14 @@ $ ->
                 gl.bindTexture gl.TEXTURE_2D, @textureHigh
 
     class SliceObject
-        constructor : (@textureObj) ->
+        constructor : (@textures) ->
             @level = 0.5
+            @depth = 0
+            bits = 0
+            for texture in @textures
+                @depth += texture.depth
+                bits = Math.max bits, texture.bits
+            texture.bits = bits for texture in @textures
 
         normal : () ->
             v = [0, 0, 1, 0]
@@ -346,89 +358,111 @@ $ ->
 
         createBuffers : (widget) ->
             gl = widget.gl
-            this.positionBuffer ?= gl.createBuffer()
-            this.normalBuffer ?= gl.createBuffer()
-            this.uvBuffer ?= gl.createBuffer()
-            this.indexBuffer ?= gl.createBuffer()
-            texture = @textureObj
-            vertices = []
-            normals = []
-            uvs = []
-            indices = []
+            thisIdx = 0
+            @indexBuffer ?= gl.createBuffer()
+            for idx, texture of @textures
+                positionBuffer = gl.createBuffer()
+                normalBuffer = gl.createBuffer()
+                uvBuffer = gl.createBuffer()
+                vertices = []
+                normals = []
+                uvs = []
+                indices = []
 
-            bds =
-                left : -1
-                right : 1
-                top : 1
-                bottom : -1
+                bds =
+                    left : -1
+                    right : 1
+                    top : 1
+                    bottom : -1
 
-            for i in [0...texture.depth]
-                level = i / (texture.depth - 1)
-                z = -1 + 2 * level
-                vertices.push(
-                    bds.left, bds.bottom, z,
-                    bds.right, bds.bottom, z,
-                    bds.left, bds.top, z,
-                    bds.right, bds.top, z
-                )
-                normals.push(
-                    0, 0, 1,
-                    0, 0, 1,
-                    0, 0, 1,
-                    0, 0, 1
-                )
-                [u0, v0, u1, v1] = texture.getUVOffsets i
-                uvs.push(
-                    u0, v0
-                    u1, v0,
-                    u0, v1,
-                    u1, v1
-                )
-                i6 = i*4
-                indices.push(
-                    i6+0, i6+1, i6+2, i6+2, i6+1, i6+3
-                )
+                for i in [0...texture.depth]
+                    level = thisIdx / (@depth - 1)
+                    z = -1 + 2 * level
+                    vertices.push(
+                        bds.left, bds.bottom, z,
+                        bds.right, bds.bottom, z,
+                        bds.left, bds.top, z,
+                        bds.right, bds.top, z
+                    )
+                    normals.push(
+                        0, 0, 1,
+                        0, 0, 1,
+                        0, 0, 1,
+                        0, 0, 1
+                    )
+                    [u0, v0, u1, v1] = texture.getUVOffsets i
+                    uvs.push(
+                        u0, v0
+                        u1, v0,
+                        u0, v1,
+                        u1, v1
+                    )
+                    thisIdx++
 
-            widget.setFloatBufferData @positionBuffer, vertices, 3
-            widget.setFloatBufferData @normalBuffer, normals, 3
-            widget.setFloatBufferData @uvBuffer, uvs, 2
-            widget.setElementArrayBufferData @indexBuffer, indices
+                widget.setFloatBufferData positionBuffer, vertices, 3
+                widget.setFloatBufferData normalBuffer, normals, 3
+                widget.setFloatBufferData uvBuffer, uvs, 2
+                texture.positionBuffer = positionBuffer
+                texture.normalBuffer = normalBuffer
+                texture.uvBuffer = uvBuffer
 
         draw : (widget, first, last) ->
             gl = widget.gl
-            texture = @textureObj
-            first ?= Math.round(@level * (texture.depth-1))
+            first ?= Math.round(@level * (@depth-1))
             last ?= first
-            if !this.positionBuffer
-                @createBuffers widget
-            widget.setFloatAttribPointer 'aVertexPosition', @positionBuffer
-            widget.setFloatAttribPointer 'aVertexNormal', @normalBuffer
-            widget.setFloatAttribPointer 'aUV', @uvBuffer
-
-            # gin up an index buffer
-            indices = []
-            for i in [first .. last]
-                i4 = i * 4
-                indices.push(
-                    i4, i4+1, i4+2, i4+2, i4+1, i4+3
-                )
-            widget.setElementArrayBufferData @indexBuffer, indices
-
-            gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @indexBuffer
-
-            widget.uniform1f('uMin', widget.minrange)
-            widget.uniform1f('uMax', widget.maxrange)
-            widget.uniform1f('uMinThreshold', widget.minthreshold)
-            widget.uniform1f('uMaxThreshold', widget.maxthreshold)
-
-            widget.uniform1f 'uMaxLimit', texture.getMaxLimit()
-            texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
+            tstart = 0
+            tstop = @textures.length - 1
+            if first > last
+                [tstart, tstop] = [tstop, tstart]
+            min = Math.min(first, last)
+            max = Math.max(first, last)
 
             widget.pushmv()
             if @matrix?
                 mat4.multiply widget.mvMatrix, @matrix
                 widget.setUniformMatrices 'uMVMatrix', 'uPMatrix', 'uNMatrix'
-            gl.drawElements gl.TRIANGLES, 6 * (Math.abs(last - first) + 1), gl.UNSIGNED_SHORT, 0
+
+            widget.uniform1f('uMin', widget.minrange)
+            widget.uniform1f('uMax', widget.maxrange)
+            widget.uniform1f('uMinThreshold', widget.minthreshold)
+            widget.uniform1f('uMaxThreshold', widget.maxthreshold)
+            lastTFirst = null
+            lastTLast = null
+
+            for idx in [tstart .. tstop]
+                texture = @textures[idx]
+                tFirst = Math.max(min - texture.startIdx, 0)
+                tLast = Math.min(max - texture.startIdx, texture.depth - 1)
+                if (tLast < tFirst)
+                    continue
+                if last < first
+                    [tFirst, tLast] = [tLast, tFirst]
+                if !texture.positionBuffer
+                    @createBuffers widget
+
+                widget.setFloatAttribPointer 'aVertexPosition', texture.positionBuffer
+                widget.setFloatAttribPointer 'aVertexNormal', texture.normalBuffer
+                widget.setFloatAttribPointer 'aUV', texture.uvBuffer
+
+                if tFirst != lastTFirst or tLast != lastTLast
+                    # gin up an index buffer
+                    indices = []
+                    for i in [tFirst .. tLast]
+                        i4 = i * 4
+                        indices.push(
+                            i4, i4+1, i4+2, i4+2, i4+1, i4+3
+                        )
+                    widget.setElementArrayBufferData @indexBuffer, indices
+
+                    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @indexBuffer
+                    lastTFirst = tFirst
+                    lastTLast = tLast
+
+                widget.uniform1f 'uMaxLimit', texture.getMaxLimit()
+                texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
+
+                gl.drawElements gl.TRIANGLES, 6 * (Math.abs(tLast - tFirst) + 1), gl.UNSIGNED_SHORT, 0
+
             widget.popmv()
 
     swizzleYZX = ([x, y, z]) -> [y, z, x]
@@ -479,16 +513,23 @@ $ ->
             reader = new NrrdReader(data)
             reader.parseHeader()
             makeSlice = (idx, swizzle, unswizzle, matrix) ->
-                pixelData = TextureObject::unpackTextureData reader, swizzle, unswizzle
-                textureObj = TextureObject::makeTexture2dFromData widget, pixelData
-                slice = new SliceObject textureObj
+                startIdx = 0
+                textures = []
+                while true
+                    pixelData = TextureObject::unpackTextureData startIdx, reader, swizzle, unswizzle
+                    if !pixelData
+                        break
+                    textureObj = TextureObject::makeTexture2dFromData widget, pixelData
+                    textureObj.startIdx = startIdx
+                    textures.push textureObj
+                    startIdx += textureObj.depth
+                slice = new SliceObject textures
                 #yuck
-                vec3.scale pixelData.vectors[0], pixelData.width
-                vec3.scale pixelData.vectors[1], pixelData.height
-                vec3.scale pixelData.vectors[2], pixelData.depth
-                if vec3.dot(pixelData.vectors[2], _xyzVec(idx)) < 0
+                vectors = ((vec3.scale reader.vectors[i], reader.sizes[i], vec3.create()) for i in [0..2])
+                vectors = swizzle vectors
+                if vec3.dot(vectors[2], _xyzVec(idx)) < 0
                     slice.flipped = true
-                slice.matrix = _makeMat4 pixelData.vectors
+                slice.matrix = _makeMat4 vectors
                 widget.slices.push slice
                 bindSliceControls widget, slice, idx
             xyz = _guessCoords(reader.vectors)
@@ -586,7 +627,7 @@ $ ->
         $(depthSliderSelector).slider
             min : 0
             max : 1
-            step : 1 / (slice.textureObj.depth - 1)
+            step : 1 / (slice.depth - 1)
             value : 0.5
             slide : (event, ui) ->
                 slice.level = ui.value
