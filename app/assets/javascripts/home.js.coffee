@@ -65,7 +65,6 @@ $ ->
 
         if @volumeOn
             widget.uniform1i 'uMultiple', 1
-            widget.uniform1f 'uOpacity', @opacity
             # figure out which set to draw, and which order to draw in
             bestd = -Infinity
             flip = false
@@ -80,6 +79,17 @@ $ ->
                     bestSlice = s
                     flip = (d > 0)
             # Draw the slice at many depths
+            
+            # Since different directions have different spacings and thus
+            # different numbers of rendered slices through the same volumes
+            # we need to adjust the opacity, making the more sparsely spaced
+            # ones more opaque.
+            # t_base ^ n_base = t ^ (n_base / scale)
+            # t = t_base ^ scale
+            tbase = 1 - @opacity
+            t = Math.pow tbase, bestSlice.scale
+            opacity = 1 - t
+            widget.uniform1f 'uOpacity', opacity
             first = 0
             last = bestSlice.depth - 1
             if flip
@@ -519,6 +529,8 @@ $ ->
             reader = new NrrdReader(data)
             reader.parseHeader()
             reader.values = reader.makeValueArray()
+            scales = (vec3.length v for v in reader.vectors)
+            minScale = Math.min.apply Math, scales
             makeSlice = (idx, swizzle, unswizzle, matrix) ->
                 startIdx = 0
                 textures = []
@@ -531,6 +543,7 @@ $ ->
                     textures.push textureObj
                     startIdx += textureObj.depth
                 slice = new SliceObject textures
+                slice.scale = (vec3.length reader.vectors[idx]) / minScale
                 #yuck
                 vectors = ((vec3.scale reader.vectors[i], reader.sizes[i], vec3.create()) for i in [0..2])
                 vectors = swizzle vectors
@@ -538,6 +551,7 @@ $ ->
                     slice.flipped = true
                 slice.matrix = _makeMat4 vectors
                 widget.slices.push slice
+                slice.createBuffers widget
                 bindSliceControls widget, slice, idx
             xyz = _guessCoords(reader.vectors)
             # xy
