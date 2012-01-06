@@ -369,12 +369,13 @@ $ ->
             gl = widget.gl
             thisIdx = 0
             @indexBuffer ?= gl.createBuffer()
+            @indexRevBuffer ?= gl.createBuffer()
+            maxd = 0
             for idx, texture of @textures
+                maxd = Math.max maxd, texture.depth
                 positionBuffer = gl.createBuffer()
-                normalBuffer = gl.createBuffer()
                 uvBuffer = gl.createBuffer()
                 vertices = []
-                normals = []
                 uvs = []
                 indices = []
 
@@ -393,12 +394,6 @@ $ ->
                         bds.left, bds.top, z,
                         bds.right, bds.top, z
                     )
-                    normals.push(
-                        0, 0, 1,
-                        0, 0, 1,
-                        0, 0, 1,
-                        0, 0, 1
-                    )
                     [u0, v0, u1, v1] = texture.getUVOffsets i
                     uvs.push(
                         u0, v0
@@ -408,11 +403,26 @@ $ ->
                     )
                     thisIdx++
 
+                # forward and backwards index buffers.
+                # could live in the widget. But eh.
+                indices = []
+                indicesRev = []
+                for i in [0 ... maxd]
+                    i4 = i * 4
+                    i4r = (maxd - 1) *4 - i4
+                    indices.push(
+                        i4, i4+1, i4+2, i4+2, i4+1, i4+3
+                    )
+                    indicesRev.push(
+                        i4r, i4r+1, i4r+2, i4r+2, i4r+1, i4r+3
+                    )
+
+                widget.setElementArrayBufferData @indexBuffer, indices
+                widget.setElementArrayBufferData @indexRevBuffer, indicesRev
+
                 widget.setFloatBufferData positionBuffer, vertices, 3
-                widget.setFloatBufferData normalBuffer, normals, 3
                 widget.setFloatBufferData uvBuffer, uvs, 2
                 texture.positionBuffer = positionBuffer
-                texture.normalBuffer = normalBuffer
                 texture.uvBuffer = uvBuffer
 
         draw : (widget, first, last) ->
@@ -435,8 +445,9 @@ $ ->
             widget.uniform1f('uMax', widget.maxrange)
             widget.uniform1f('uMinThreshold', widget.minthreshold)
             widget.uniform1f('uMaxThreshold', widget.maxthreshold)
-            lastTFirst = null
-            lastTLast = null
+
+            rev = (tstop < tstart)
+            gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, (if rev then @indexRevBuffer else @indexBuffer)
 
             for idx in [tstart .. tstop]
                 texture = @textures[idx]
@@ -444,33 +455,19 @@ $ ->
                 tLast = Math.min(max - texture.startIdx, texture.depth - 1)
                 if (tLast < tFirst)
                     continue
-                if last < first
-                    [tFirst, tLast] = [tLast, tFirst]
                 if !texture.positionBuffer
                     @createBuffers widget
 
                 widget.setFloatAttribPointer 'aVertexPosition', texture.positionBuffer
-                widget.setFloatAttribPointer 'aVertexNormal', texture.normalBuffer
                 widget.setFloatAttribPointer 'aUV', texture.uvBuffer
-
-                if tFirst != lastTFirst or tLast != lastTLast
-                    # gin up an index buffer
-                    indices = []
-                    for i in [tFirst .. tLast]
-                        i4 = i * 4
-                        indices.push(
-                            i4, i4+1, i4+2, i4+2, i4+1, i4+3
-                        )
-                    widget.setElementArrayBufferData @indexBuffer, indices
-
-                    gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, @indexBuffer
-                    lastTFirst = tFirst
-                    lastTLast = tLast
 
                 widget.uniform1f 'uMaxLimit', texture.getMaxLimit()
                 texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
 
-                gl.drawElements gl.TRIANGLES, 6 * (Math.abs(tLast - tFirst) + 1), gl.UNSIGNED_SHORT, 0
+                offset = 2 * (if rev then tstart else (texture.depth - tLast - 1))
+                nVerts = 6 * (Math.abs(tLast - tFirst) + 1)
+
+                gl.drawElements gl.TRIANGLES, nVerts, gl.UNSIGNED_SHORT, offset
 
             widget.popmv()
 
