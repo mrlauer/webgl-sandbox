@@ -277,6 +277,7 @@ $ ->
             pixelsHigh = new Uint8Array sz
             maxValue = reader.max ? 255
             
+            [s0, s1, s2] = unswizzle [0, 1, 2]
             _rowsz = @_rowsz
             rowlen = if depth < _rowsz then depth else _rowsz
             for d in [0 ... depth]
@@ -285,7 +286,10 @@ $ ->
                 dd = d+startIdx
                 for i in [0 ... height]
                     for j in [0 ... width]
-                        [jIn, iIn, dIn] = unswizzle [j, i, dd]
+                        coords = [j, i, dd]
+                        jIn = coords[s0]
+                        iIn = coords[s1]
+                        dIn = coords[s2]
                         p = reader.values[ dIn * heightIn * widthIn + iIn * widthIn + jIn ]
                         if p < 0 then p = 0
                         if p > maxValue then maxValue = p
