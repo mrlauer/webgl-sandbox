@@ -77,7 +77,7 @@ class NrrdReader
         data = @data
         arr = null
         max = 0
-        if @type = 'short'
+        if @type == 'short'
             arr = new Int16Array sz
             if @endian == 'big'
                 for i in [0 ... sz ]
@@ -90,7 +90,7 @@ class NrrdReader
                     arr[i] = (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
                     max = Math.max max, arr[i]
         else if @type == 'int'
-            arr = Int32Array sz
+            arr = new Int32Array sz
             if @endian == 'big'
                 for i in [0 ... sz ]
                     iidx = pos + i*4
