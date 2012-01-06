@@ -464,7 +464,7 @@ $ ->
                 widget.uniform1f 'uMaxLimit', texture.getMaxLimit()
                 texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
 
-                offset = 2 * (if rev then tstart else (texture.depth - tLast - 1))
+                offset = 2 * 6 * (if rev then (texture.depth - tLast - 1) else tFirst)
                 nVerts = 6 * (Math.abs(tLast - tFirst) + 1)
 
                 gl.drawElements gl.TRIANGLES, nVerts, gl.UNSIGNED_SHORT, offset
