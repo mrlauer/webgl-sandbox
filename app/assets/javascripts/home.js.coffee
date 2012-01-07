@@ -6,6 +6,7 @@
 #= require readnrrd
 #= require filewidget
 #= require viewcontroller
+#= require histogram
 
 $ ->
     # TODO: move this!
@@ -570,6 +571,9 @@ $ ->
             for own key, c of widget.controllers
                 c.setPoints pts
                 c.camera.zoomToFit pts
+
+            computeHistogramData(reader)
+            drawHistogram()
             widget.draw()
             setStatus "Loaded"
         catch msg
@@ -602,6 +606,7 @@ $ ->
         slide : (event, ui) ->
             [widget.minrange, widget.maxrange] = _sliderValues $(this).slider, ui
             widget.draw()
+            drawHistogram()
 
     $('#threshold-slider').dragslider
         min : 0
@@ -615,6 +620,7 @@ $ ->
             c = (widget.minthreshold + widget.maxthreshold)/2
             $('#threshold-center-slider').slider 'value', c
             widget.draw()
+            drawHistogram()
 
     $('#threshold-center-slider').slider
         min : 0
@@ -631,6 +637,7 @@ $ ->
             $('#threshold-slider').dragslider 'values', 0, min
             $('#threshold-slider').dragslider 'values', 1, max
             widget.draw()
+            drawHistogram()
 
     $('#opacity-slider').slider
         min : 0
@@ -686,4 +693,45 @@ $ ->
 
     viewMouse = ->
         $("#viewMouse input[type='radio'][name='viewMouse']:checked").val()
+
+    $('#histogram').histogram()
+    drawHistogram = ->
+        $('#histogram').histogram 'option',
+            minRange : widget.minrange
+            maxRange : widget.maxrange
+            minThreshold : widget.minthreshold
+            maxThreshold : widget.maxthreshold
+        $('#histogram').histogram 'draw'
+
+    computeHistogramData = (reader) ->
+        w = $('#histogram').width()
+        result = null
+        if w
+            result =
+                min: []
+                max: []
+            # this should be more flexible and generally better
+            datamax = reader.max
+            b = 8
+            for b in [8 ... 16]
+                if (1 << b) >= datamax
+                    break
+            datamax = (1 << b)
+            buckets = []
+            for data in reader.values
+                if data
+                    buckets[data] = (buckets[data] || 0) + 1
+            for i in [0 .. w]
+                start = Math.floor(i * datamax / w)
+                stop = Math.floor((i+1) * datamax / w)
+                min = Infinity
+                max = 0
+                for j in [start ... stop]
+                    if buckets[j]?
+                        min = Math.min min, buckets[j]
+                        max = Math.max max, buckets[j]
+                min = Math.min min, max
+                result.min[i] = min
+                result.max[i] = max
+        $('#histogram').histogram 'option', 'data', result
 

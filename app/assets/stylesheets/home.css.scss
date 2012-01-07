@@ -91,3 +91,16 @@ $slider_handle_width : 6px;
 #viewctrls {
     margin-top: 0.2em;
 }
+
+#histogram {
+    width: $slidersz;
+    height: 40px;
+    border: thin solid black;
+    overflow: hidden;
+    margin-bottom:0;
+}
+
+.histogram-canvas {
+    width:100%;
+    height:100%;
+}
