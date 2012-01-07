@@ -374,7 +374,7 @@ $ ->
         normal : () ->
             v = [0, 0, 1, 0]
             mat4.multiplyVec4 @matrix, v
-            return v
+            return vec3.normalize v
 
         createBuffers : (widget) ->
             gl = widget.gl
