@@ -291,20 +291,22 @@ $ ->
             [s0, s1, s2] = unswizzle [0, 1, 2]
             _rowsz = @_rowsz
             rowlen = if depth < _rowsz then depth else _rowsz
+            values = reader.values
             for d in [0 ... depth]
                 xoff = d % rowlen
                 yoff = Math.floor(d / _rowsz)
                 dd = d+startIdx
                 for i in [0 ... height]
+                    baseIdx = (i + yoff * height) * rowlen * width + xoff * width
                     for j in [0 ... width]
                         coords = [j, i, dd]
                         jIn = coords[s0]
                         iIn = coords[s1]
                         dIn = coords[s2]
-                        p = reader.values[ dIn * heightIn * widthIn + iIn * widthIn + jIn ]
+                        p = values[ dIn * heightIn * widthIn + iIn * widthIn + jIn ]
                         if p < 0 then p = 0
                         if p > maxValue then maxValue = p
-                        pixelIdx = (i + yoff * height) * rowlen * width + j + xoff * width
+                        pixelIdx = baseIdx + j
                         pixels[pixelIdx] = p
                         pixelsHigh[pixelIdx] = p >> 8
             bits = 8
