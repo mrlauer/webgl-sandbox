@@ -9,6 +9,8 @@
 #= require histogram
 
 $ ->
+    # In chrome, memory management of lots of Float32Arrays gets slow.
+    # So don't use them for all the math
     if window?
         window.glMatrixArrayType = Array
 
@@ -22,11 +24,14 @@ $ ->
         dest[2] = vec1[2] * s1 + vec2[2] * s2
         return dest
 
+    # minimum b s.t. 2^b >= n
     bitsNeeded = (n) ->
-        for b in [0 ... 64]
-            if (1 << b) >= n
-                return b
-        return NaN
+        # if we have a power of two, then there can be roundoff error, so we need a bit
+        # of mucking about
+        r = Math.floor Math.log(n) / Math.LN2
+        if (1 << r) < n
+            r += 1
+        return r
     
     if false
         $.ajax '/binary',
