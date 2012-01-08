@@ -9,6 +9,9 @@
 #= require histogram
 
 $ ->
+    if window?
+        window.glMatrixArrayType = Array
+
     # TODO: move this!
 
     vec3.linComb = (vec1, s1, vec2, s2, dest) ->
@@ -18,6 +21,12 @@ $ ->
         dest[1] = vec1[1] * s1 + vec2[1] * s2
         dest[2] = vec1[2] * s1 + vec2[2] * s2
         return dest
+
+    bitsNeeded = (n) ->
+        for b in [0 ... 64]
+            if (1 << b) >= n
+                return b
+        return NaN
     
     if false
         $.ajax '/binary',
@@ -714,24 +723,29 @@ $ ->
                 max: []
             # this should be more flexible and generally better
             datamax = reader.max
-            b = 8
-            for b in [8 ... 16]
-                if (1 << b) >= datamax
-                    break
+            b = bitsNeeded datamax
             datamax = (1 << b)
-            buckets = []
+
+            nbuckets = 1 << (bitsNeeded w)
+            buckets = new Uint32Array(nbuckets)
+            perBucket = datamax / nbuckets
+            d1 = new Date
             for data in reader.values
-                if data
-                    buckets[data] = (buckets[data] || 0) + 1
+                if data > 0
+                    bucket = Math.floor(data / perBucket)
+                    buckets[bucket] += 1
+            d2 = new Date
+#             console.log "took #{d2-d1} ms to fill buckets"
             for i in [0 .. w]
-                start = Math.floor(i * datamax / w)
-                stop = Math.floor((i+1) * datamax / w)
+                start = Math.floor(i * (nbuckets-1) / w)
+                stop = Math.floor((i+1) * (nbuckets-1) / w)
                 min = Infinity
                 max = 0
                 for j in [start ... stop]
                     if buckets[j]?
-                        min = Math.min min, buckets[j]
-                        max = Math.max max, buckets[j]
+                        max += buckets[j]
+                if (stop - start)
+                    max /= (stop - start)
                 min = Math.min min, max
                 result.min[i] = min
                 result.max[i] = max

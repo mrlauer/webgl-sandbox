@@ -47,17 +47,18 @@
                 top = Math.log top
                 scale = h/top
                 ctx.beginPath()
-                ctx.moveTo 0, h
-                for i in [0 ... w]
+                for i in [0 .. w]
                     min = Math.log(data.min[i] ? 1)
                     max = Math.log(data.max[i] ? 1)
                     min *= scale
                     max *= scale
+                    if i == 0 then ctx.moveTo i, h - max
                     ctx.lineTo i, h - max
                     ctx.lineTo i, h - min
                 ctx.lineWidth = 2
                 ctx.stroke()
                 ctx.lineTo w, h
+                ctx.lineTo 0, h
                 ctx.globalAlpha = 0.3
                 ctx.fill()
                 ctx.globalAlpha = 1
