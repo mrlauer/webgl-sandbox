@@ -77,6 +77,7 @@ class NrrdReader
         data = @data
         arr = null
         max = 0
+        min = Infinity
         if @type == 'short'
             arr = new Int16Array sz
             if @endian == 'big'
@@ -84,11 +85,13 @@ class NrrdReader
                     iidx = pos + i*2
                     arr[i] = (data.charCodeAt(iidx) & 0xff) * 256 + (data.charCodeAt(iidx+1) & 0xff)
                     max = Math.max max, arr[i]
+                    min = Math.min min, arr[i]
             else
                 for i in [0 ... sz ]
                     iidx = pos + i*2
                     arr[i] = (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
                     max = Math.max max, arr[i]
+                    min = Math.min min, arr[i]
         else if @type == 'int'
             arr = new Int32Array sz
             if @endian == 'big'
@@ -99,6 +102,7 @@ class NrrdReader
                         + (data.charCodeAt(iidx+2) & 0xff) * 256 \
                         + (data.charCodeAt(iidx+3) & 0xff)
                     max = Math.max max, arr[i]
+                    min = Math.min min, arr[i]
             else
                 for i in [0 ... sz ]
                     iidx = pos + i*4
@@ -107,7 +111,12 @@ class NrrdReader
                         + (data.charCodeAt(iidx+1) & 0xff) * 256 \
                         + (data.charCodeAt(iidx) & 0xff)
                     max = Math.max max, arr[i]
+                    min = Math.min min, arr[i]
         @max ?= max
+        if min < 0
+            for i in [0 ... sz]
+                arr[i] -= min
+            @max -= min
         return arr
 
     getValueFn : ->
