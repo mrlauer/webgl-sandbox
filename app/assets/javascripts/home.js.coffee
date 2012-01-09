@@ -105,11 +105,23 @@ $ ->
             t = Math.pow tbase, bestSlice.scale
             opacity = 1 - t
             widget.uniform1f 'uOpacity', opacity
-            first = 0
-            last = bestSlice.depth - 1
+            first = Math.round((bestSlice.depth - 1) * bestSlice.trim[0])
+            last = Math.round((bestSlice.depth - 1) * bestSlice.trim[1])
             if flip
                 [first, last] = [last, first]
             bestSlice.draw this, first, last
+
+    # set the bounds for the i'th coordinate
+    setLimits = (idx, low, high) ->
+        self = this
+        slice = self.slices[idx]
+        if slice.flipped
+            [low, high] = [1-high, 1-low]
+        slice.trim = [low, high]
+        slice1 = self.slices[(idx+1)%3]
+        slice1.bounds[1] = [low, high]
+        slice2 = self.slices[(idx+2)%3]
+        slice2.bounds[0] = [low, high]
 
     widget = null
     $('#canvas').mrlgl
@@ -126,10 +138,16 @@ $ ->
             this.maxthreshold = 1.0
             this.opacity = 0.125
 
+            @xLimits = [0, 1]
+            @yLimits = [0, 1]
+            @zLimits = [0, 1]
+
             @slicesOn = true
             @volumesOn = false
 
             eye = [4, 4, 4]
+
+            @setLimits = setLimits
 
             @controllers =
                 ThreeD : new PerspectiveController
@@ -151,7 +169,6 @@ $ ->
             @controller = @controllers.ThreeD
 
         draw : drawScene
-
 
     $('#canvas').dragHelper
         onStart: (e) ->
@@ -381,6 +398,8 @@ $ ->
         constructor : (@textures) ->
             @level = 0.5
             @depth = 0
+            @trim = [0, 1]
+            @bounds = [[0, 1], [0, 1]]
             bits = 0
             for texture in @textures
                 @depth += texture.depth
@@ -402,8 +421,10 @@ $ ->
                 maxd = Math.max maxd, texture.depth
                 positionBuffer = gl.createBuffer()
                 uvBuffer = gl.createBuffer()
+                localUvBuffer = gl.createBuffer()
                 vertices = []
                 uvs = []
+                localuvs = []
                 indices = []
 
                 bds =
@@ -428,29 +449,38 @@ $ ->
                         u0, v1,
                         u1, v1
                     )
+                    localuvs.push(
+                        0, 0,
+                        1, 0,
+                        0, 1,
+                        1, 1
+                    )
                     thisIdx++
-
-                # forward and backwards index buffers.
-                # could live in the widget. But eh.
-                indices = []
-                indicesRev = []
-                for i in [0 ... maxd]
-                    i4 = i * 4
-                    i4r = (maxd - 1) *4 - i4
-                    indices.push(
-                        i4, i4+1, i4+2, i4+2, i4+1, i4+3
-                    )
-                    indicesRev.push(
-                        i4r, i4r+1, i4r+2, i4r+2, i4r+1, i4r+3
-                    )
-
-                widget.setElementArrayBufferData @indexBuffer, indices
-                widget.setElementArrayBufferData @indexRevBuffer, indicesRev
 
                 widget.setFloatBufferData positionBuffer, vertices, 3
                 widget.setFloatBufferData uvBuffer, uvs, 2
+                widget.setFloatBufferData localUvBuffer, localuvs, 2
                 texture.positionBuffer = positionBuffer
                 texture.uvBuffer = uvBuffer
+                texture.localUvBuffer = localUvBuffer
+
+            # forward and backwards index buffers.
+            # could live in the widget. But eh.
+            indices = []
+            indicesRev = []
+            for i in [0 ... maxd]
+                i4 = i * 4
+                i4r = (maxd - 1) *4 - i4
+                indices.push(
+                    i4, i4+1, i4+2, i4+2, i4+1, i4+3
+                )
+                indicesRev.push(
+                    i4r, i4r+1, i4r+2, i4r+2, i4r+1, i4r+3
+                )
+
+            widget.setElementArrayBufferData @indexBuffer, indices
+            widget.setElementArrayBufferData @indexRevBuffer, indicesRev
+
 
         draw : (widget, first, last) ->
             gl = widget.gl
@@ -473,7 +503,10 @@ $ ->
             widget.uniform1f('uMinThreshold', widget.minthreshold)
             widget.uniform1f('uMaxThreshold', widget.maxthreshold)
 
-            rev = (tstop < tstart)
+            widget.uniform2f 'uLocalMin', @bounds[0][0], @bounds[1][0]
+            widget.uniform2f 'uLocalMax', @bounds[0][1], @bounds[1][1]
+
+            rev = (last < first)
             gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, (if rev then @indexRevBuffer else @indexBuffer)
 
             for idx in [tstart .. tstop]
@@ -487,6 +520,7 @@ $ ->
 
                 widget.setFloatAttribPointer 'aVertexPosition', texture.positionBuffer
                 widget.setFloatAttribPointer 'aUV', texture.uvBuffer
+                widget.setFloatAttribPointer 'aLocalUV', texture.localUvBuffer
 
                 widget.uniform1f 'uMaxLimit', texture.getMaxLimit()
                 texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
@@ -567,10 +601,11 @@ $ ->
                 if vec3.dot(vectors[2], _xyzVec(idx)) < 0
                     slice.flipped = true
                 slice.matrix = _makeMat4 vectors
-                widget.slices.push slice
+                widget.slices[idx] = slice
                 slice.createBuffers widget
                 bindSliceControls widget, slice, idx
             xyz = _guessCoords(reader.vectors)
+            widget.slices = []
             # xy
             makeSlice xyz[2], ((x) -> x), ((y) -> y)
             # yz
@@ -679,6 +714,19 @@ $ ->
                 if slice.flipped
                     slice.level = 1-slice.level
                 widget.draw()
+        trimSliderSelector = "##{coord}-trim-slider"
+        $(trimSliderSelector).slider('destroy')
+        $(trimSliderSelector).slider
+            min : 0
+            max : 1
+            step : 1 / (slice.depth - 1)
+            values : [0, 1]
+            range : true
+            rangeDrag : true
+            slide : (event, ui) ->
+                # this might belong inside the slice, not the ui!
+                widget.setLimits idx, ui.values[0], ui.values[1]
+                widget.draw()
 
     $('#load-file').fileWidget
         beforeRead: ->
@@ -705,6 +753,8 @@ $ ->
         val = $(this).val()
         widget[a] = false for a in ['slicesOn', 'volumeOn']
         widget[val + "On"] = $(this).is(':checked')
+        $('.volume-control').toggleClass('hidden', !widget.volumeOn)
+        $('.slice-control').toggleClass('hidden', !widget.slicesOn)
         widget.draw()
 
     viewMouse = ->

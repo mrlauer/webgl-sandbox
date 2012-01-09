@@ -6,6 +6,7 @@
 
     varying vec4 vPosition;
     varying vec2 vUV;
+    varying vec2 vLocalUV;
     uniform sampler2D uTextureLow;
     uniform sampler2D uTextureHigh;
 
@@ -17,8 +18,17 @@
     uniform float uMaxThreshold;
     uniform float uMinThreshold;
     uniform float uOpacity;
+    uniform vec2 uLocalMin;
+    uniform vec2 uLocalMax;
  
     void main(void) {
+        if(uMultiple && 
+           (vLocalUV.s < uLocalMin.s || vLocalUV.s > uLocalMax.s ||
+            vLocalUV.t < uLocalMin.t || vLocalUV.t > uLocalMax.t )) {
+            discard;
+            return;
+        }
+
         float alpha = 1.0;
         vec3 low = texture2D(uTextureLow, vUV).rgb;
         vec3 high = texture2D(uTextureHigh, vUV).rgb;
