@@ -14,6 +14,7 @@ class NrrdReader
     fieldFunctions :
         'type' : (data) ->
             switch data
+                when 'unsigned char', 'uint8' then
                 when 'signed char', 'int8' then
                 when 'short', 'signed short', 'short int', 'int16' then
                 when 'int', 'int32' then
@@ -29,6 +30,9 @@ class NrrdReader
         'space directions' : (data) ->
             parts = data.match /\(.*?\)/g
             @vectors = ( (parseFloat f for f in v[1...-1].split /,/) for v in parts)
+        'spacings' : (data) ->
+            parts = data.split /\s+/
+            @spacings = (parseFloat f for f in parts)
                         
     constructor: (@data) ->
         @pos = 0
@@ -73,6 +77,10 @@ class NrrdReader
                 [0, 1, 0],
                 [0, 0, 1]
             ]
+            if @spacings
+                for i in [0 .. 2]
+                    if !isNaN @spacings[i]
+                        vec3.scale @vectors[i], @spacings[i]
 
     makeValueArray : ->
         sz = 1
@@ -85,6 +93,13 @@ class NrrdReader
         switch @type
             when 'signed char', 'int8'
                 arr = new Int8Array sz
+                for i in [0 ... sz ]
+                    iidx = pos + i
+                    arr[i] = (data.charCodeAt(iidx) & 0xff)
+                    max = Math.max max, arr[i]
+                    min = Math.min min, arr[i]
+            when 'unsigned char', 'uint8'
+                arr = new Uint8Array sz
                 for i in [0 ... sz ]
                     iidx = pos + i
                     arr[i] = (data.charCodeAt(iidx) & 0xff)
