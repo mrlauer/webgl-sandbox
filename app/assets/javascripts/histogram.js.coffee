@@ -48,8 +48,8 @@
                 scale = h/top
                 ctx.beginPath()
                 for i in [0 .. w]
-                    min = Math.log(data.min[i] ? 1)
-                    max = Math.log(data.max[i] ? 1)
+                    min = Math.log(data.min[i] || 1)
+                    max = Math.log(data.max[i] || 1)
                     min *= scale
                     max *= scale
                     if i == 0 then ctx.moveTo i, h - max

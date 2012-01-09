@@ -13,8 +13,12 @@ class NrrdReader
 
     fieldFunctions :
         'type' : (data) ->
-            if data != 'short' && data != 'int'
-                @error 'Only short/int data is allowed'
+            switch data
+                when 'signed char', 'int8' then
+                when 'short', 'signed short', 'short int', 'int16' then
+                when 'int', 'int32' then
+                else
+                    @error 'Only short/int/int8 data is allowed'
             @type = data
         'endian' : (data) ->
             @endian = data
@@ -78,40 +82,48 @@ class NrrdReader
         arr = null
         max = 0
         min = Infinity
-        if @type == 'short'
-            arr = new Int16Array sz
-            if @endian == 'big'
+        switch @type
+            when 'signed char', 'int8'
+                arr = new Int8Array sz
                 for i in [0 ... sz ]
-                    iidx = pos + i*2
-                    arr[i] = (data.charCodeAt(iidx) & 0xff) * 256 + (data.charCodeAt(iidx+1) & 0xff)
+                    iidx = pos + i
+                    arr[i] = (data.charCodeAt(iidx) & 0xff)
                     max = Math.max max, arr[i]
                     min = Math.min min, arr[i]
-            else
-                for i in [0 ... sz ]
-                    iidx = pos + i*2
-                    arr[i] = (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
-                    max = Math.max max, arr[i]
-                    min = Math.min min, arr[i]
-        else if @type == 'int'
-            arr = new Int32Array sz
-            if @endian == 'big'
-                for i in [0 ... sz ]
-                    iidx = pos + i*4
-                    arr[i] = (data.charCodeAt(iidx) & 0xff) * 0x1000000 \
-                        + (data.charCodeAt(iidx+1) & 0xff) * 0x10000 \
-                        + (data.charCodeAt(iidx+2) & 0xff) * 256 \
-                        + (data.charCodeAt(iidx+3) & 0xff)
-                    max = Math.max max, arr[i]
-                    min = Math.min min, arr[i]
-            else
-                for i in [0 ... sz ]
-                    iidx = pos + i*4
-                    arr[i] = (data.charCodeAt(iidx+3) & 0xff) * 0x1000000 \
-                        + (data.charCodeAt(iidx+2) & 0xff) * 0x10000 \
-                        + (data.charCodeAt(iidx+1) & 0xff) * 256 \
-                        + (data.charCodeAt(iidx) & 0xff)
-                    max = Math.max max, arr[i]
-                    min = Math.min min, arr[i]
+            when 'short', 'signed short', 'short int', 'int16'
+                arr = new Int16Array sz
+                if @endian == 'big'
+                    for i in [0 ... sz ]
+                        iidx = pos + i*2
+                        arr[i] = (data.charCodeAt(iidx) & 0xff) * 256 + (data.charCodeAt(iidx+1) & 0xff)
+                        max = Math.max max, arr[i]
+                        min = Math.min min, arr[i]
+                else
+                    for i in [0 ... sz ]
+                        iidx = pos + i*2
+                        arr[i] = (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
+                        max = Math.max max, arr[i]
+                        min = Math.min min, arr[i]
+            when 'int', 'int32'
+                arr = new Int32Array sz
+                if @endian == 'big'
+                    for i in [0 ... sz ]
+                        iidx = pos + i*4
+                        arr[i] = (data.charCodeAt(iidx) & 0xff) * 0x1000000 \
+                            + (data.charCodeAt(iidx+1) & 0xff) * 0x10000 \
+                            + (data.charCodeAt(iidx+2) & 0xff) * 256 \
+                            + (data.charCodeAt(iidx+3) & 0xff)
+                        max = Math.max max, arr[i]
+                        min = Math.min min, arr[i]
+                else
+                    for i in [0 ... sz ]
+                        iidx = pos + i*4
+                        arr[i] = (data.charCodeAt(iidx+3) & 0xff) * 0x1000000 \
+                            + (data.charCodeAt(iidx+2) & 0xff) * 0x10000 \
+                            + (data.charCodeAt(iidx+1) & 0xff) * 256 \
+                            + (data.charCodeAt(iidx) & 0xff)
+                        max = Math.max max, arr[i]
+                        min = Math.min min, arr[i]
         @max ?= max
         if min < 0
             for i in [0 ... sz]

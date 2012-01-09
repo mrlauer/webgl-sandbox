@@ -56,6 +56,8 @@ Image::Application.routes.draw do
   match "/binary3d" => "home#binary3d"
   match "/headData" => "home#headData"
 
+  match "/jstests/nrrd/:type" => "jstests#nrrd"
+
   # javascript testing
   match "/jstests" => "jstests#jstests"
 
