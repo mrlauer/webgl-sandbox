@@ -9,6 +9,9 @@
     varying vec2 vLocalUV;
     uniform sampler2D uTextureLow;
     uniform sampler2D uTextureHigh;
+    uniform sampler2D uRainbowTexture;
+
+    uniform bool uRainbow;
 
     uniform bool uMultiple;
 
@@ -43,6 +46,10 @@
         vec3 maxrange = vec3(uMax, uMax, uMax);
         vec3 fac = maxrange - minrange;
         light = (light - minrange) / fac;
+
+        if(uRainbow) {
+            light = texture2D(uRainbowTexture, vec2(light.r, 0)).rgb;
+        }
 
         if (uMultiple && alpha != 0.0) {
             alpha = uOpacity;

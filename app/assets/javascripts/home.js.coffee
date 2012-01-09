@@ -6,6 +6,7 @@
 #= require readnrrd
 #= require filewidget
 #= require viewcontroller
+#= require colors
 #= require histogram
 
 $ ->
@@ -72,6 +73,14 @@ $ ->
             this.setUniformMatrices('uMVMatrix', 'uPMatrix', 'uNMatrix')
 
         this.setupShader()
+
+        if @rainbow and @rainbowTexture
+            widget.uniform1i 'uRainbow', 1
+            widget.uniform1i 'uRainbowTexture', 2
+            gl.activeTexture gl.TEXTURE2
+            gl.bindTexture gl.TEXTURE_2D, @rainbowTexture
+        else
+            widget.uniform1i 'uRainbow', 0
 
         if @slicesOn
             widget.uniform1i 'uMultiple', 0
@@ -145,6 +154,8 @@ $ ->
             @slicesOn = true
             @volumesOn = false
             @interpolateTextures = true
+
+            @rainbowTexture = ColorUtilities.makeRainbowTexture(@gl)
 
             @getTextureInterpolation = ->
                 if @interpolateTextures then @gl.LINEAR else @gl.NEAREST
@@ -763,8 +774,16 @@ $ ->
         $('.slice-control').toggleClass('hidden', !widget.slicesOn)
         widget.draw()
 
-    $('#textureInterpolate').button().
-        attr('checked', if widget.interpolate then "checked" else "").
+    $('#rainbow').
+        attr('checked', if widget.rainbow then "checked" else null).
+        button().
+        click ->
+            widget.rainbow = $(this).is(':checked')
+            widget.draw()
+
+    $('#textureInterpolate').
+        attr('checked', if widget.interpolate then "checked" else null).
+        button().
         click ->
             checked = $(this).is(':checked')
             widget.interpolateTextures = checked
