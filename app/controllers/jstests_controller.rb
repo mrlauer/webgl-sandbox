@@ -36,11 +36,7 @@ encoding: raw
 
         fmt += '*'
 
-        puts "fmt = #{fmt}"
-
         nrrd = hdr + (data.pack fmt)
-
-        puts "nrrd length #{hdr.length}; nrrd length #{nrrd.length}"
 
         send_data nrrd, :disposition => 'inline'
     end

@@ -144,6 +144,10 @@ $ ->
 
             @slicesOn = true
             @volumesOn = false
+            @interpolateTextures = true
+
+            @getTextureInterpolation = ->
+                if @interpolateTextures then @gl.LINEAR else @gl.NEAREST
 
             eye = [4, 4, 4]
 
@@ -263,8 +267,9 @@ $ ->
         texture = gl.createTexture()
         gl.bindTexture gl.TEXTURE_2D, texture
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, texsz, texsz, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, pixels)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+        interp = widget.getTextureInterpolation()
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, interp)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, interp)
         return texture
 
     # TODO, maybe: make this a widget
@@ -367,10 +372,11 @@ $ ->
                 gl.bindTexture gl.TEXTURE_2D, texture
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, textureData.width * rowlen, textureData.height * nrows, 0,
                     gl.LUMINANCE, gl.UNSIGNED_BYTE, pixels)
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                interp = widget.getTextureInterpolation()
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, interp)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, interp)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
                 return texture
             obj = new TextureObject
             for p in ['bits', 'height', 'width', 'depth']
@@ -756,6 +762,21 @@ $ ->
         $('.volume-control').toggleClass('hidden', !widget.volumeOn)
         $('.slice-control').toggleClass('hidden', !widget.slicesOn)
         widget.draw()
+
+    $('#textureInterpolate').button().
+        attr('checked', if widget.interpolate then "checked" else "").
+        click ->
+            checked = $(this).is(':checked')
+            widget.interpolateTextures = checked
+            interp = widget.getTextureInterpolation()
+            for slice in widget.slices
+                for texture in slice.textures
+                    gl = widget.gl
+                    gl.bindTexture gl.TEXTURE_2D, texture.texture
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, interp)
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, interp)
+                    gl.bindTexture gl.TEXTURE_2D, null
+            widget.draw()
 
     viewMouse = ->
         $("#viewMouse input[type='radio'][name='viewMouse']:checked").val()
