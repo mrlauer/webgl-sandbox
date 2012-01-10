@@ -235,7 +235,11 @@ $ ->
                     otherModelPoint = helper.intersectRayPlane(otherScreenRay, focalPlane)
                     modelAxis = vec3.normalize(vec3.subtract(otherModelPoint, camera.focalPoint()))
                     
-                    controller.rotateAbout(-angle, modelAxis, camera.focalPoint())
+                    angleFac = Math.PI * 2 / 3
+                    zAngle = delx / sz * angleFac
+                    xAngle = dely / sz * angleFac
+                    controller.turntable zAngle, xAngle
+#                     controller.rotateAbout(-angle, modelAxis, camera.focalPoint())
 
             else if @zoom
                 # figure out the distance in model coords from top to bottom of the window

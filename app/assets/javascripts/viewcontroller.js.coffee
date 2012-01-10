@@ -26,6 +26,8 @@ class ViewController
 
     rotateAbout: (angle, axis, center) ->
 
+    turntable: (zAngle, xAngle) ->
+
     pan: (vec) ->
         
     zoom: (distMoved, distNorm) ->
@@ -41,7 +43,33 @@ class PerspectiveController extends ViewController
         @camera = new mrlCamera cameraOptions
 
     rotateAbout: (angle, axis, center) ->
+        # decompose into x and y
         @camera.rotateAbout angle, axis, center
+
+    turntable: (zAngle, xAngle) ->
+        focus = @camera.focalPoint()
+        delta = vec3.subtract @camera.eye, focus, vec3.create()
+        zVec = [0, 0, 1]
+        zMat = mat4.identity mat4.create()
+        mat4.rotate zMat, -zAngle, zVec
+        mat4.multiplyVec3 zMat, delta
+        vec3.add focus, delta, @camera.eye
+        mat4.multiplyVec3 zMat, @camera.up
+        mat4.multiplyVec3 zMat, @camera.direction
+
+        # Now rotate about the x angle
+        matrices = {}
+        @camera.setMatrices matrices
+        mat4.inverse matrices.mvMatrix
+        xVec = mat4.multiplyVec4 matrices.mvMatrix, [1, 0, 0, 0]
+        xMat = mat4.identity mat4.create()
+        mat4.rotate xMat, -xAngle, xVec
+        mat4.multiplyVec3 xMat, delta
+        vec3.add focus, delta, @camera.eye
+        mat4.multiplyVec3 xMat, @camera.up
+        mat4.multiplyVec3 xMat, @camera.direction
+
+        @camera.setNearFar()
 
     pan: (delta) ->
         vec3.subtract @camera.eye, delta
