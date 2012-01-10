@@ -707,13 +707,20 @@ $ ->
             widget.draw()
             drawHistogram()
 
+    [uiToOpacity, opacityToUi] = ( ->
+        beta = 10
+        return [
+            (x)-> (Math.pow(beta, x) - 1)/ (beta - 1) ,
+            (y)-> Math.log(y * (beta - 1) + 1) / Math.log(beta)
+        ]
+    )()
     $('#opacity-slider').slider
         min : 0
-        max : 0.25
+        max : 1
         step : 1/256
-        value : widget.opacity
+        value : opacityToUi widget.opacity
         slide : (event, ui) ->
-            widget.opacity = ui.value
+            widget.opacity = uiToOpacity ui.value
             widget.draw()
 
     bindSliceControls = (widget, slice, idx) ->
