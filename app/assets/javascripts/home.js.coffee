@@ -191,7 +191,10 @@ $ ->
             @rotate = false
             @pan = false
             @zoom = false
-            this[ctrlType] = true
+            if this.middleButton
+                @rotate = true
+            else
+                this[ctrlType] = true
 
         onDrag : (e, delx, dely) ->
             widget = $(this.element).data('mrlgl')
@@ -611,7 +614,7 @@ $ ->
                     textures.push textureObj
                     startIdx += textureObj.depth
                 slice = new SliceObject textures
-                slice.scale = (vec3.length reader.vectors[idx]) / minScale
+                slice.scale = (swizzle scales)[2] / minScale
                 #yuck
                 vectors = ((vec3.scale reader.vectors[i], reader.sizes[i], vec3.create()) for i in [0..2])
                 vectors = swizzle vectors
@@ -760,7 +763,11 @@ $ ->
 
     widget.setView = (view) ->
         # set up an appropriate camera
-        widget.controller = widget.controllers[view]
+        c = widget.controllers[view]
+        if widget.controller == c
+            c.flipIfOrtho()
+        else
+            widget.controller = c
         widget.draw()
 
     $('#viewradio').buttonset()

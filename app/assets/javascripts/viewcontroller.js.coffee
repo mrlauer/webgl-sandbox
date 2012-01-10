@@ -32,6 +32,8 @@ class ViewController
 
     zoomPoint: (widget, point, ray, delta) ->
 
+    flipIfOrtho: ->
+
 
 class PerspectiveController extends ViewController
     constructor: (cameraOptions) ->
@@ -83,6 +85,8 @@ class OrthoController extends ViewController
         @camera.top = (top - ydel) * factor + ydel
         @camera.bottom = (bottom - ydel) * factor + ydel
 
+    flipIfOrtho: ->
+        vec3.scale @camera.direction, -1
 
 exports.ViewController = ViewController
 exports.PerspectiveController = PerspectiveController
