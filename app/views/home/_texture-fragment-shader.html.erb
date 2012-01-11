@@ -39,7 +39,8 @@
 
         const float eps=0.001;
         if(light.r < uMinThreshold-eps || light.r > uMaxThreshold+eps) {
-            alpha = 0.0;
+            discard;
+            return;
         }
 
         vec3 minrange = vec3(uMin, uMin, uMin);

@@ -19,6 +19,9 @@ exports.ColorUtilities =
         b = val & 0xff
         return [r, g, b]
 
+    getRainbowColors : () ->
+        color for color, value of colorMap
+
     makeRainbowTexture : (gl) ->
         arr = new Uint8Array(21)
         idx = 0

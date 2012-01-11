@@ -549,7 +549,7 @@ $ ->
                 widget.setFloatAttribPointer 'aUV', texture.uvBuffer
                 widget.setFloatAttribPointer 'aLocalUV', texture.localUvBuffer
 
-                widget.uniform1f 'uMaxLimit', texture.getMaxLimit()
+                widget.uniform1f 'uMaxLimit', @max
                 texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
 
                 offset = 2 * 6 * (if rev then (texture.depth - tLast - 1) else tFirst)
@@ -622,6 +622,7 @@ $ ->
                     startIdx += textureObj.depth
                 slice = new SliceObject textures
                 slice.scale = (swizzle scales)[2] / minScale
+                slice.max = reader.max
                 #yuck
                 vectors = ((vec3.scale reader.vectors[i], reader.sizes[i], vec3.create()) for i in [0..2])
                 vectors = swizzle vectors
@@ -800,6 +801,7 @@ $ ->
         button().
         click ->
             widget.rainbow = $(this).is(':checked')
+            drawHistogram()
             widget.draw()
 
     $('#textureInterpolate').
@@ -828,6 +830,7 @@ $ ->
             maxRange : widget.maxrange
             minThreshold : widget.minthreshold
             maxThreshold : widget.maxthreshold
+            rainbow : widget.rainbow
         $('#histogram').histogram 'draw'
 
     computeHistogramData = (reader) ->
@@ -838,23 +841,29 @@ $ ->
                 min: []
                 max: []
             # this should be more flexible and generally better
+            # There may be a whole lot of
             datamax = reader.max
             b = bitsNeeded datamax
             datamax = (1 << b)
 
-            nbuckets = 1 << (bitsNeeded w)
+            # A little gross. We want at least as many FULL buckets as width.
+            nbuckets = 1 << (bitsNeeded w * datamax / reader.max)
             buckets = new Uint32Array(nbuckets)
             perBucket = datamax / nbuckets
             d1 = new Date
             for data in reader.values
-                if data > 0
-                    bucket = Math.floor(data / perBucket)
-                    buckets[bucket] += 1
+                bucket = Math.floor(data / perBucket)
+                buckets[bucket] += 1
             d2 = new Date
 #             console.log "took #{d2-d1} ms to fill buckets"
+            bucketFactor = (nbuckets-1) * reader.max / (w * datamax)
             for i in [0 .. w]
-                start = Math.floor(i * (nbuckets-1) / w)
-                stop = Math.floor((i+1) * (nbuckets-1) / w)
+                start = Math.floor(i * bucketFactor)
+                stop = Math.floor((i+1) * bucketFactor)
+                if start == stop
+                    result.min[i] = null
+                    result.max[i] = null
+                    continue
                 min = Infinity
                 max = 0
                 for j in [start ... stop]
