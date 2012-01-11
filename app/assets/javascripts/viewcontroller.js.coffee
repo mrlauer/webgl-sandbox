@@ -49,25 +49,26 @@ class PerspectiveController extends ViewController
     turntable: (zAngle, xAngle) ->
         focus = @camera.focalPoint()
         delta = vec3.subtract @camera.eye, focus, vec3.create()
+
+        # Rotate about the x angle. First compute the view's x-vector in model coordinates
+        matrices = {}
+        @camera.setMatrices matrices
+        mat4.inverse matrices.mvMatrix
+        # Pass a vec4 with 0 w to get proper transformation of a vector, not a point.
+        xVec = mat4.multiplyVec4 matrices.mvMatrix, [1, 0, 0, 0]
+
+        # Rotate about the z angle
         zVec = [0, 0, 1]
         zMat = mat4.identity mat4.create()
         mat4.rotate zMat, -zAngle, zVec
+
+        # And the x rotation
+        mat4.rotate zMat, -xAngle, xVec
+
         mat4.multiplyVec3 zMat, delta
         vec3.add focus, delta, @camera.eye
         mat4.multiplyVec3 zMat, @camera.up
         mat4.multiplyVec3 zMat, @camera.direction
-
-        # Now rotate about the x angle
-        matrices = {}
-        @camera.setMatrices matrices
-        mat4.inverse matrices.mvMatrix
-        xVec = mat4.multiplyVec4 matrices.mvMatrix, [1, 0, 0, 0]
-        xMat = mat4.identity mat4.create()
-        mat4.rotate xMat, -xAngle, xVec
-        mat4.multiplyVec3 xMat, delta
-        vec3.add focus, delta, @camera.eye
-        mat4.multiplyVec3 xMat, @camera.up
-        mat4.multiplyVec3 xMat, @camera.direction
 
         @camera.setNearFar()
 

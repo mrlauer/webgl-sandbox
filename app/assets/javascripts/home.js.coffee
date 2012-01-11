@@ -93,6 +93,7 @@ $ ->
             bestd = -Infinity
             flip = false
             dir = @controller.camera.direction
+            vec3.normalize dir, vec3.create()
             bestSlice = null
             for s in @slices
                 n = s.normal()
