@@ -108,10 +108,12 @@ $ ->
             # different numbers of rendered slices through the same volumes
             # we need to adjust the opacity, making the more sparsely spaced
             # ones more opaque.
-            # t_base ^ n_base = t ^ (n_base / scale)
-            # t = t_base ^ scale
+            # Similarly for the viewing angle; in that case we really ought to
+            # do it per-fragment in the shader.
+            # t_base ^ n_base = t ^ (n_base * cos(ang) / scale)
+            # t = t_base ^ (scale / cos(ang) )
             tbase = 1 - @opacity
-            t = Math.pow tbase, bestSlice.scale
+            t = Math.pow tbase, bestSlice.scale / bestd
             opacity = 1 - t
             widget.uniform1f 'uOpacity', opacity
             first = Math.round((bestSlice.depth - 1) * bestSlice.trim[0])
