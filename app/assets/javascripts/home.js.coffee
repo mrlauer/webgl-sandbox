@@ -607,6 +607,7 @@ $ ->
             reader = new NrrdReader(data)
             reader.parseHeader()
             reader.values = reader.makeValueArray()
+            reader.values = reader.makeGradientLengthArray reader.values
             scales = (vec3.length v for v in reader.vectors)
             minScale = Math.min.apply Math, scales
             makeSlice = (idx, swizzle, unswizzle, matrix) ->
