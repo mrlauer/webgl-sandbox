@@ -146,6 +146,31 @@ class NrrdReader
             @max -= min
         return arr
 
+    makeGradientArray : (arr)->
+        sz = 1
+        sz *= s for s in @sizes
+        max = 0
+        min = Infinity
+        gradients = new Int8Array(sz * 3)
+        [szx, szy, szz] = @sizes
+        [scalex, scaley, scalez] = (vec3.length v for v in @vectors)
+        max = 0
+        for i in [1 ... szz-1]
+            for j in [1 ... szy-1]
+                for k in [1 ... szx-1]
+                    base = szx*szy*i + szx*j + k
+                    x = (arr[base + 1] - arr[base - 1])/scalex
+                    y = (arr[base + szx] - arr[base - szx])/scaley
+                    z = (arr[base + szx*szy] - arr[base - szx*szy])/scalez
+                    len = Math.round(Math.sqrt(x*x + y*y + z*z))
+                    max = Math.max max, len
+                    gradients[base*3] = Math.floor( x/len * 127 + 127)
+                    gradients[base*3 + 1] = Math.floor( y/len * 127 + 127)
+                    gradients[base*3 + 2] = Math.floor( z/len * 127 + 127)
+
+        @normMax = max
+        return gradients
+
     makeGradientLengthArray : (arr)->
         sz = 1
         sz *= s for s in @sizes

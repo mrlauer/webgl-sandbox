@@ -1,0 +1,80 @@
+<% shaderName ||= "shader-fs" %>
+<script id="<%= shaderName %>" type="x-shader/x-fragment">
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    varying vec4 vPosition;
+    varying vec2 vUV;
+    varying vec2 vLocalUV;
+    uniform sampler2D uTextureLow;
+    uniform sampler2D uTextureHigh;
+    uniform sampler2D uRainbowTexture;
+    uniform sampler2D uNormTexture;
+
+    uniform bool uRainbow;
+
+    uniform bool uMultiple;
+
+    uniform float uMaxLimit;
+    uniform float uMax;
+    uniform float uMin;
+    uniform float uMaxThreshold;
+    uniform float uMinThreshold;
+    uniform float uOpacity;
+    uniform vec2 uLocalMin;
+    uniform vec2 uLocalMax;
+
+    uniform vec3 uLightDir;
+    uniform vec3 uDiffuseColor;
+
+    uniform mat3 uNMatrix;
+ 
+    void main(void) {
+        if(uMultiple && 
+           (vLocalUV.s < uLocalMin.s || vLocalUV.s > uLocalMax.s ||
+            vLocalUV.t < uLocalMin.t || vLocalUV.t > uLocalMax.t )) {
+            discard;
+            return;
+        }
+
+        float alpha = 1.0;
+        vec3 low = texture2D(uTextureLow, vUV).rgb;
+        vec3 high = texture2D(uTextureHigh, vUV).rgb;
+        vec3 light = (low * 255.0 + high * (255.0 * 256.0) ) / uMaxLimit;
+
+        const float eps=0.001;
+        if(light.r < uMinThreshold-eps || light.r > uMaxThreshold+eps) {
+            discard;
+            return;
+        }
+
+        vec3 minrange = vec3(uMin, uMin, uMin);
+        vec3 maxrange = vec3(uMax, uMax, uMax);
+        vec3 fac = maxrange - minrange;
+        light = (light - minrange) / fac;
+
+        if(uRainbow) {
+            light = texture2D(uRainbowTexture, vec2(light.r, 0)).rgb;
+        }
+
+        if (uMultiple && alpha != 0.0) {
+            alpha = uOpacity;
+        }
+
+        // Add the norm
+        vec3 norm = texture2D(uNormTexture, vUV).xyz * 2.0 - vec3(1.0, 1.0, 1.0);
+        // Actually we should apply the transpose to the light direction, outside this. Idiot programmer...
+        norm = normalize(uNMatrix * norm);
+        float diffuseWeight = abs(dot(norm, uLightDir));
+
+        light += diffuseWeight * uDiffuseColor;
+ 
+        gl_FragColor = vec4(light, alpha);
+        if(gl_FragColor.a == 0.0) {
+            discard;
+        }
+    }
+</script>
+
+

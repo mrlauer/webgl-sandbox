@@ -343,12 +343,14 @@ $ ->
             sz = width * height * nrows * rowlen
             pixels = new Uint8Array sz
             pixelsHigh = new Uint8Array sz
+            pixelNorms = new Uint8Array sz*3
             maxValue = reader.max ? 255
             
             [s0, s1, s2] = unswizzle [0, 1, 2]
             _rowsz = @_rowsz
             rowlen = if depth < _rowsz then depth else _rowsz
             values = reader.values
+            norms = reader.norms
             for d in [0 ... depth]
                 xoff = d % rowlen
                 yoff = Math.floor(d / _rowsz)
@@ -360,12 +362,15 @@ $ ->
                         jIn = coords[s0]
                         iIn = coords[s1]
                         dIn = coords[s2]
-                        p = values[ dIn * heightIn * widthIn + iIn * widthIn + jIn ]
+                        idxIn = dIn * heightIn * widthIn + iIn * widthIn + jIn
+                        p = values[ idxIn ]
+                        norm = (norms[ii] for ii in [idxIn*3 ... idxIn*3+3])
                         if p < 0 then p = 0
                         if p > maxValue then maxValue = p
                         pixelIdx = baseIdx + j
                         pixels[pixelIdx] = p
                         pixelsHigh[pixelIdx] = p >> 8
+                        pixelNorms[pixelIdx*3+ii] = norm[ii] for ii in [0 ... 3]
             bits = 8
             for b in [8 ... 16]
                 if (1 << b) > maxValue
@@ -375,13 +380,14 @@ $ ->
             vectors = swizzle reader.vectors
 
             return {
-                bits : bits,
-                width : width,
-                height : height,
-                depth : depth,
+                bits : bits
+                width : width
+                height : height
+                depth : depth
                 vectors : vec3.create(v) for v in vectors
-                pixels : pixels,
+                pixels : pixels
                 pixelsHigh : pixelsHigh
+                pixelNorms : pixelNorms
             }
 
         makeTexture2dFromData : (widget, textureData) ->
@@ -399,6 +405,17 @@ $ ->
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
                 return texture
+            makeVectorTexture = (pixels) =>
+                texture = gl.createTexture()
+                gl.bindTexture gl.TEXTURE_2D, texture
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, textureData.width * rowlen, textureData.height * nrows, 0,
+                    gl.RGB, gl.UNSIGNED_BYTE, pixels)
+                interp = widget.getTextureInterpolation()
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, interp)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, interp)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+                return texture
             obj = new TextureObject
             for p in ['bits', 'height', 'width', 'depth']
                 obj[p] = textureData[p]
@@ -406,12 +423,14 @@ $ ->
             obj.texture = makeTexture textureData.pixels
             gl.activeTexture gl.TEXTURE1
             obj.textureHigh = makeTexture textureData.pixelsHigh
+            gl.activeTexture gl.TEXTURE2
+            obj.textureNorms = makeVectorTexture textureData.pixelNorms
             return obj
 
         getMaxLimit : ->
             return (1 << @bits) - 1
 
-        setTextureUniforms : (widget, lowvar, highvar) ->
+        setTextureUniforms : (widget, lowvar, highvar, normvar) ->
             gl = widget.gl
             widget.uniform1i lowvar, 0
             gl.activeTexture gl.TEXTURE0
@@ -420,6 +439,10 @@ $ ->
                 widget.uniform1i highvar, 1
                 gl.activeTexture gl.TEXTURE1
                 gl.bindTexture gl.TEXTURE_2D, @textureHigh
+            if normvar?
+                widget.uniform1i normvar, 3
+                gl.activeTexture gl.TEXTURE3
+                gl.bindTexture gl.TEXTURE_2D, @textureNorms
 
     class SliceObject
         constructor : (@textures) ->
@@ -536,6 +559,9 @@ $ ->
             rev = (last < first)
             gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, (if rev then @indexRevBuffer else @indexBuffer)
 
+            widget.uniform3fv 'uLightDir', vec3.normalize [1, 1, 1]
+            widget.uniform3fv 'uDiffuseColor', [1, 0, 0]
+
             for idx in [tstart .. tstop]
                 texture = @textures[idx]
                 tFirst = Math.max(min - texture.startIdx, 0)
@@ -550,7 +576,7 @@ $ ->
                 widget.setFloatAttribPointer 'aLocalUV', texture.localUvBuffer
 
                 widget.uniform1f 'uMaxLimit', @max
-                texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
+                texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh', 'uNormTexture'
 
                 offset = 2 * 6 * (if rev then (texture.depth - tLast - 1) else tFirst)
                 nVerts = 6 * (Math.abs(tLast - tFirst) + 1)
@@ -607,6 +633,7 @@ $ ->
             reader = new NrrdReader(data)
             reader.parseHeader()
             reader.values = reader.makeValueArray()
+            reader.norms = reader.makeGradientArray reader.values
             reader.values = reader.makeGradientLengthArray reader.values
             scales = (vec3.length v for v in reader.vectors)
             minScale = Math.min.apply Math, scales
