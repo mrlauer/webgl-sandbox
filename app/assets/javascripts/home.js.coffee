@@ -347,6 +347,7 @@ $ ->
             maxValue = reader.max ? 255
             
             [s0, s1, s2] = unswizzle [0, 1, 2]
+            [t0, t1, t2] = swizzle [0, 1, 2]
             _rowsz = @_rowsz
             rowlen = if depth < _rowsz then depth else _rowsz
             values = reader.values
@@ -364,13 +365,13 @@ $ ->
                         dIn = coords[s2]
                         idxIn = dIn * heightIn * widthIn + iIn * widthIn + jIn
                         p = values[ idxIn ]
-                        norm = (norms[ii] for ii in [idxIn*3 ... idxIn*3+3])
+                        norm = (norms[idxIn*3 + ii] for ii in [t0, t1, t2])
                         if p < 0 then p = 0
                         if p > maxValue then maxValue = p
                         pixelIdx = baseIdx + j
                         pixels[pixelIdx] = p
                         pixelsHigh[pixelIdx] = p >> 8
-                        pixelNorms[pixelIdx*3+ii] = norm[ii] for ii in [0 ... 3]
+                        pixelNorms[pixelIdx*3+ii] = norm[ii] for ii in [0, 1, 2]
             bits = 8
             for b in [8 ... 16]
                 if (1 << b) > maxValue
