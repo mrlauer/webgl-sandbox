@@ -15,3 +15,5 @@
 /tmp
 .sass-cache
 /public/assets
+
+/config/master.key
