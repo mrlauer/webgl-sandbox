@@ -21,6 +21,8 @@ set :scm_username, "mrlauer"
 set :use_sudo, false
 #default_run_options[:pty] = true
 
+set :assets_roles, [:web, :app]
+
 namespace :deploy do
   desc "Restart nginx"
   task :restart do
