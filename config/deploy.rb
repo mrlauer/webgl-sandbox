@@ -22,6 +22,7 @@ set :use_sudo, false
 #default_run_options[:pty] = true
 
 set :assets_roles, [:web, :app]
+set :assets_manifests, ['app/assets/config/manifest.js']
 
 namespace :deploy do
   desc "Restart nginx"
