@@ -31,7 +31,7 @@ namespace :deploy do
   task :restart do
     run "#{deploy_to}/bin/restart"
   end
-  after  :finishing,    :compile_assets
+#   after  :finishing,    :compile_assets
 end
 
 # if you're still using the script/reaper helper you will need
