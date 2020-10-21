@@ -10,6 +10,7 @@
 #= require histogram
 
 $ ->
+    console.log ('INIT')
     # In chrome, memory management of lots of Float32Arrays gets slow.
     # So don't use them for all the math
     if window?
@@ -200,7 +201,7 @@ $ ->
                 this[ctrlType] = true
 
         onDrag : (e, delx, dely) ->
-            widget = $(this.element).data('mrlgl')
+            widget = $(this.element).mrlgl('instance')
             controller = widget.controller
             camera = widget.controller.camera
             mat4.identity(widget.pMatrix)
@@ -260,7 +261,7 @@ $ ->
     # zoom on wheel.
     # TODO: combine with draghelper, maybe
     $("#canvas").mousewheel (e, delta) ->
-        widget = $(this).data('mrlgl')
+        widget = $(this).mrlgl('instance')
         controller = widget.controller
         camera = widget.controller.camera
         mat4.identity(widget.pMatrix)
@@ -670,6 +671,7 @@ $ ->
     load_url '/binary3d'
 
     $('#load-head').click ->
+        console.log 'CLICK'
         load_url '/headData'
 
     _sliderValues = (slider, ui) ->
@@ -737,7 +739,8 @@ $ ->
     bindSliceControls = (widget, slice, idx) ->
         coord = ['x', 'y', 'z'][idx]
         depthSliderSelector = "##{coord}-depth-slider"
-        $(depthSliderSelector).slider('destroy')
+        if $(depthSliderSelector).slider('instance')
+            $(depthSliderSelector).slider('destroy')
         $(depthSliderSelector).slider
             min : 0
             max : 1
@@ -750,7 +753,8 @@ $ ->
                     slice.level = 1-slice.level
                 widget.draw()
         trimSliderSelector = "##{coord}-trim-slider"
-        $(trimSliderSelector).slider('destroy')
+        if $(trimSliderSelector).slider('instance')
+            $(trimSliderSelector).slider('destroy')
         $(trimSliderSelector).slider
             min : 0
             max : 1

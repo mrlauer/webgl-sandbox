@@ -1,4 +1,4 @@
-exports ?= this
+exports = this
 
 colorMap =
     red : "ff0000"

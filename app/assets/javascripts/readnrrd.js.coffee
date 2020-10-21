@@ -4,7 +4,7 @@
 # only raw encoding
 # only shorts
 
-exports ?= this
+exports = this
 
 class NrrdReader
 

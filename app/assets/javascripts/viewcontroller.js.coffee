@@ -1,5 +1,5 @@
 # Deal with cameras and things for views
-exports ?= this
+exports = this
 
 _clone = (obj) ->
     if typeof obj == "object"
