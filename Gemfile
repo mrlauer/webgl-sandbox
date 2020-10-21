@@ -38,6 +38,8 @@ gem 'capistrano-bundler'
 gem 'capistrano-rvm'
 gem 'capistrano-rails'
 
+gem 'rails-dom-testing'
+
 # To use debugger
 # gem 'ruby-debug19', :require => 'ruby-debug'
 

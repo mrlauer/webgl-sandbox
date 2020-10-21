@@ -1,8 +1,10 @@
 set :application, "babybrain"
 set :repo_url,  "git://github.com/mrlauer/webgl-sandbox.git"
 
-set :scm, :git
 # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
+
+set :default_shell, "/bin/bash -l"
+
 
 set :deploy_to, "/home/mrlauer/default/babybrain"
 set :default_environment, {
