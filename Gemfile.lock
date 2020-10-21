@@ -206,6 +206,7 @@ DEPENDENCIES
   jquery-rails
   jquery-ui-rails
   rails
+  rails-dom-testing
   sass-rails
   sqlite3
   therubyracer
