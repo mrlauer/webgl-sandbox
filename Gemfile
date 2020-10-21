@@ -36,6 +36,7 @@ gem 'capistrano'
 gem 'capistrano-passenger'
 gem 'capistrano-bundler'
 gem 'capistrano-rvm'
+gem 'capistrano-rails'
 
 # To use debugger
 # gem 'ruby-debug19', :require => 'ruby-debug'

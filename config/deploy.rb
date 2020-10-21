@@ -22,12 +22,14 @@ set :use_sudo, false
 #default_run_options[:pty] = true
 
 set :assets_roles, [:web, :app]
+set :assets_manifests, ['app/assets/config/manifest.js']
 
 namespace :deploy do
   desc "Restart nginx"
   task :restart do
     run "#{deploy_to}/bin/restart"
   end
+  after  :finishing,    :compile_assets
 end
 
 # if you're still using the script/reaper helper you will need
