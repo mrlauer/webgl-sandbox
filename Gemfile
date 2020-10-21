@@ -34,6 +34,7 @@ gem 'therubyracer'
 # Deploy with Capistrano
 gem 'capistrano'
 gem 'capistrano-passenger'
+gem 'capistrano-bundler'
 gem 'capistrano-rvm'
 
 # To use debugger
