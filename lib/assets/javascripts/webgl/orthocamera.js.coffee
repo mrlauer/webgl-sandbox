@@ -1,6 +1,6 @@
 # Camera for ortho views
 #
-exports ?= this
+exports = this
 
 class mrlOrthoCamera
     constructor: (options) ->

@@ -52,14 +52,14 @@ Image::Application.routes.draw do
   # just remember to delete public/index.html.
   root :to => 'home#index'
 
-  match "/binary2d" => "home#binary2d"
-  match "/binary3d" => "home#binary3d"
-  match "/headData" => "home#headData"
+  get "/binary2d" => "home#binary2d"
+  get "/binary3d" => "home#binary3d"
+  get "/headData" => "home#headData"
 
-  match "/jstests/nrrd/:type" => "jstests#nrrd"
+  get "/jstests/nrrd/:type" => "jstests#nrrd"
 
   # javascript testing
-  match "/jstests" => "jstests#jstests"
+  get "/jstests" => "jstests#jstests"
 
   # See how all your routes lay out with "rake routes"
 
