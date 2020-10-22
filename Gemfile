@@ -40,6 +40,13 @@ gem 'capistrano-rails'
 
 gem 'rails-dom-testing'
 
+group :development do
+  # Capistrano v2 should use '~> 0.0.5'
+  # Capistrano v3 should use '~> 1.0.0'
+  # Capistrano v3.8+ should use '~> 1.2.0'
+  gem 'capistrano-local-precompile', require: false
+end
+
 # To use debugger
 # gem 'ruby-debug19', :require => 'ruby-debug'
 
