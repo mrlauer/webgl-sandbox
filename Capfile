@@ -26,7 +26,6 @@ install_plugin Capistrano::SCM::Git
 #   https://github.com/capistrano/rails
 #   https://github.com/capistrano/passenger
 #
-set :default_shell, "/bin/bash -l"
 
 require "capistrano/rails"
 require "capistrano/rvm"
