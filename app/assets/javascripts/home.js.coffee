@@ -10,11 +10,10 @@
 #= require histogram
 
 $ ->
-    console.log ('INIT')
     # In chrome, memory management of lots of Float32Arrays gets slow.
     # So don't use them for all the math
-    if window?
-        window.glMatrixArrayType = Array
+#    if window?
+#        window.glMatrixArrayType = Array
 
     # TODO: move this!
 
@@ -669,10 +668,10 @@ $ ->
             success: (data, status, xhr) ->
                 load_data widget, data
 
-    load_url '/binary3d'
+    #load_url '/binary3d'
+    load_url '/headData'
 
     $('#load-head').click ->
-        console.log 'CLICK'
         load_url '/headData'
 
     _sliderValues = (slider, ui) ->
@@ -800,6 +799,8 @@ $ ->
         $('.volume-control').toggleClass('hidden', !widget.volumeOn)
         $('.slice-control').toggleClass('hidden', !widget.slicesOn)
         widget.draw()
+    # let's start with volume on: fake a click
+    $('#viewVol').click()
 
     $('#rainbow').
         attr('checked', if widget.rainbow then "checked" else null).
