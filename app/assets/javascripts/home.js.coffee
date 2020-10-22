@@ -694,7 +694,7 @@ $ ->
         min : 0
         max : 1
         step : 0.01
-        values : [0, 1]
+        values : [widget.minthreshold, 1]
         range : true
         rangeDrag : true
         slide : (event, ui) ->
