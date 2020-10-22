@@ -147,7 +147,7 @@ $ ->
             this.gl.enable this.gl.DEPTH_TEST
             this.minrange = 0.0
             this.maxrange = 1.0
-            this.minthreshold = 0.0
+            this.minthreshold = 0.1
             this.maxthreshold = 1.0
             this.opacity = 0.125
             this.rainbow = true
