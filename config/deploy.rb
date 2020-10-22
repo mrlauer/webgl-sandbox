@@ -28,7 +28,7 @@ set :assets_manifests, ['app/assets/config/manifest.js']
 
 namespace :deploy do
   desc "Restart nginx"
-  task :restart :roles => :app do
+  task :restart, :roles => :app do
     run "#{deploy_to}/bin/restart"
   end
 #   after  :finishing,    :compile_assets
