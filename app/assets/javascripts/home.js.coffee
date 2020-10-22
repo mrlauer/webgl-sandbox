@@ -150,7 +150,7 @@ $ ->
             this.minthreshold = 0.0
             this.maxthreshold = 1.0
             this.opacity = 0.125
-            this.rainbow = false
+            this.rainbow = true
 
             @xLimits = [0, 1]
             @yLimits = [0, 1]
