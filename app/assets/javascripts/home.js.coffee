@@ -157,7 +157,7 @@ $ ->
             @zLimits = [0, 1]
 
             @slicesOn = true
-            @volumesOn = false
+            @volumeOn = false
             @interpolateTextures = true
 
             @rainbowTexture = ColorUtilities.makeRainbowTexture(@gl)
@@ -172,7 +172,7 @@ $ ->
             @controllers =
                 ThreeD : new PerspectiveController
                     eye : eye
-                    direction : (vec3.normalize [-1, -1, -1]),
+                    direction : (vec3.normalize [-1, 1, -1]),
                     up : [0, 0, 1],
                     focalDist :  vec3.length eye
                     near : 0.1,
