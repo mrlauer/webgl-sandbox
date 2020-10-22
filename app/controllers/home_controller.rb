@@ -97,7 +97,7 @@ encoding: raw
 
   def headData
       response.header['Content-Encoding'] = 'gzip'
-      send_file Rails.root.join('data', 'data2.gz')
+      send_file Rails.root.join('data', 'data2.gz'), filename: 'headData.nrrd', type: 'application/nrrd'
   end
 
 end
