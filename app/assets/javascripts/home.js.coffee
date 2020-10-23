@@ -12,8 +12,8 @@
 $ ->
     # In chrome, memory management of lots of Float32Arrays gets slow.
     # So don't use them for all the math
-    if window?
-        window.glMatrixArrayType = Array
+    # if window?
+    #     window.glMatrixArrayType = Array
 
     # TODO: move this!
 
@@ -445,14 +445,14 @@ $ ->
         createBuffers : (widget) ->
             gl = widget.gl
             thisIdx = 0
-            @indexBuffer ?= gl.createBuffer()
-            @indexRevBuffer ?= gl.createBuffer()
             maxd = 0
             for idx, texture of @textures
                 maxd = Math.max maxd, texture.depth
                 positionBuffer = gl.createBuffer()
                 uvBuffer = gl.createBuffer()
                 localUvBuffer = gl.createBuffer()
+                indexBuffer = gl.createBuffer()
+                indexRevBuffer = gl.createBuffer()
                 vertices = []
                 uvs = []
                 localuvs = []
@@ -494,23 +494,26 @@ $ ->
                 texture.positionBuffer = positionBuffer
                 texture.uvBuffer = uvBuffer
                 texture.localUvBuffer = localUvBuffer
+                texture.indexBuffer = indexBuffer
+                texture.indexRevBuffer = indexRevBuffer
 
-            # forward and backwards index buffers.
-            # could live in the widget. But eh.
-            indices = []
-            indicesRev = []
-            for i in [0 ... maxd]
-                i4 = i * 4
-                i4r = (maxd - 1) *4 - i4
-                indices.push(
-                    i4, i4+1, i4+2, i4+2, i4+1, i4+3
-                )
-                indicesRev.push(
-                    i4r, i4r+1, i4r+2, i4r+2, i4r+1, i4r+3
-                )
+                # forward and backwards index buffers.
+                indices = []
+                indicesRev = []
+                for i in [0 ... texture.depth]
+                    i4 = i * 4
+                    i4r = (texture.depth - 1) *4 - i4
+                    indices.push(
+                        i4, i4+1, i4+2, i4+2, i4+1, i4+3
+                    )
+                    indicesRev.push(
+                        i4r, i4r+1, i4r+2, i4r+2, i4r+1, i4r+3
+                    )
 
-            widget.setElementArrayBufferData @indexBuffer, indices
-            widget.setElementArrayBufferData @indexRevBuffer, indicesRev
+                widget.setElementArrayBufferData indexBuffer, indices
+                widget.setElementArrayBufferData indexRevBuffer, indicesRev
+
+
 
 
         draw : (widget, first, last) ->
@@ -538,7 +541,6 @@ $ ->
             widget.uniform2f 'uLocalMax', @bounds[0][1], @bounds[1][1]
 
             rev = (last < first)
-            gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, (if rev then @indexRevBuffer else @indexBuffer)
 
             for idx in [tstart .. tstop]
                 texture = @textures[idx]
@@ -548,6 +550,7 @@ $ ->
                     continue
                 if !texture.positionBuffer
                     @createBuffers widget
+                gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, (if rev then texture.indexRevBuffer else texture.indexBuffer)
 
                 widget.setFloatAttribPointer 'aVertexPosition', texture.positionBuffer
                 widget.setFloatAttribPointer 'aUV', texture.uvBuffer
