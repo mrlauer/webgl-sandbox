@@ -12,8 +12,8 @@
 $ ->
     # In chrome, memory management of lots of Float32Arrays gets slow.
     # So don't use them for all the math
-#    if window?
-#        window.glMatrixArrayType = Array
+    if window?
+        window.glMatrixArrayType = Array
 
     # TODO: move this!
 
@@ -88,40 +88,42 @@ $ ->
                 slice.draw this
 
         if @volumeOn
-            widget.uniform1i 'uMultiple', 1
-            # figure out which set to draw, and which order to draw in
-            bestd = -Infinity
-            flip = false
-            dir = @controller.camera.direction
-            vec3.normalize dir, vec3.create()
-            bestSlice = null
-            for s in @slices
-                n = s.normal()
-                d = vec3.dot dir, n
-                absd = Math.abs d
-                if absd > bestd
-                    bestd = absd
-                    bestSlice = s
-                    flip = (d > 0)
-            # Draw the slice at many depths
-            
-            # Since different directions have different spacings and thus
-            # different numbers of rendered slices through the same volumes
-            # we need to adjust the opacity, making the more sparsely spaced
-            # ones more opaque.
-            # Similarly for the viewing angle; in that case we really ought to
-            # do it per-fragment in the shader.
-            # t_base ^ n_base = t ^ (n_base * cos(ang) / scale)
-            # t = t_base ^ (scale / cos(ang) )
-            tbase = 1 - @opacity
-            t = Math.pow tbase, bestSlice.scale / bestd
-            opacity = 1 - t
-            widget.uniform1f 'uOpacity', opacity
-            first = Math.round((bestSlice.depth - 1) * bestSlice.trim[0])
-            last = Math.round((bestSlice.depth - 1) * bestSlice.trim[1])
-            if flip
-                [first, last] = [last, first]
-            bestSlice.draw this, first, last
+            if @slices
+                widget.uniform1i 'uMultiple', 1
+                # figure out which set to draw, and which order to draw in
+                bestd = -Infinity
+                flip = false
+                dir = @controller.camera.direction
+                vec3.normalize dir, vec3.create()
+                bestSlice = null
+                for s in @slices
+                    n = s.normal()
+                    d = vec3.dot dir, n
+                    absd = Math.abs d
+                    if absd > bestd
+                        bestd = absd
+                        bestSlice = s
+                        flip = (d > 0)
+                # Draw the slice at many depths
+                
+                # Since different directions have different spacings and thus
+                # different numbers of rendered slices through the same volumes
+                # we need to adjust the opacity, making the more sparsely spaced
+                # ones more opaque.
+                # Similarly for the viewing angle; in that case we really ought to
+                # do it per-fragment in the shader.
+                # t_base ^ n_base = t ^ (n_base * cos(ang) / scale)
+                # t = t_base ^ (scale / cos(ang) )
+                if bestSlice
+                    tbase = 1 - @opacity
+                    t = Math.pow tbase, bestSlice.scale / bestd
+                    opacity = 1 - t
+                    widget.uniform1f 'uOpacity', opacity
+                    first = Math.round((bestSlice.depth - 1) * bestSlice.trim[0])
+                    last = Math.round((bestSlice.depth - 1) * bestSlice.trim[1])
+                    if flip
+                        [first, last] = [last, first]
+                    bestSlice.draw this, first, last
 
     # set the bounds for the i'th coordinate
     setLimits = (idx, low, high) ->
@@ -158,6 +160,7 @@ $ ->
             @slicesOn = true
             @volumeOn = false
             @interpolateTextures = true
+            @slices = []
 
             @rainbowTexture = ColorUtilities.makeRainbowTexture(@gl)
 
@@ -782,17 +785,17 @@ $ ->
             widget.controller = c
         widget.draw()
 
-    $('#viewradio').buttonset()
+    $('#viewradio').controlgroup()
     $('#view3d').click( -> widget.setView "ThreeD" )
     $('#viewX').click( -> widget.setView "X" )
     $('#viewY').click( -> widget.setView "Y" )
     $('#viewZ').click( -> widget.setView "Z" )
-    $('#viewMouse').buttonset()
+    $('#viewMouse').controlgroup()
     $('#viewReset').button().click( ->
         widget.controller.reset()
         widget.draw()
     )
-    $('#viewType').buttonset().on 'change', 'input', (e)->
+    $('#viewType').controlgroup().on 'change', 'input', (e)->
         val = $(this).val()
         widget[a] = false for a in ['slicesOn', 'volumeOn']
         widget[val + "On"] = $(this).is(':checked')
