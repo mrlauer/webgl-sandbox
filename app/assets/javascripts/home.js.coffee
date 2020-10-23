@@ -328,6 +328,15 @@ $ ->
         statusArea.text(msg)
         statusArea.toggleClass('error', err ? false)
 
+    $('#copyurl').click ->
+        search = new URLSearchParams
+        for k of defaults
+            search.set k, widget[k]
+        url = new URL(document.URL)
+        url.search = search.toString()
+        navigator.clipboard.writeText url
+
+
     # Represents a SINGLE texture, which may be an array of slices
     # A slice object may have many of them
     class TextureObject
