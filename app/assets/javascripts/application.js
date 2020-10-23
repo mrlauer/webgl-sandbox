@@ -9,3 +9,4 @@
 //= require jquery-ui
 //= require jquery-mousewheel
 //= require jquery-dragslider.js
+//= require jquery.ui.touch-punch
