@@ -47,6 +47,33 @@ $ ->
                         d = d * 256 + data.charCodeAt(i*4+j)
                     $('body').append d + '<br/>'
 
+    parseBoundedFloat = (str) ->
+        parsed = parseFloat(str)
+        if isNaN parsed
+            return NaN
+        if parsed < 0
+            return 0
+        else if parsed > 1
+            return 1
+        return parsed
+
+    # default parameters
+    searchParams = new URLSearchParams(new URL(document.URL).search)
+
+    defaultsFromSearchParams = (searchParams, defaultsIn) ->
+        defaults = {}
+        for property of defaultsIn
+            f = parseBoundedFloat(searchParams.get property)
+            defaults[property] = if isNaN f then defaultsIn[property] else f
+
+        defaults
+
+    defaults = defaultsFromSearchParams searchParams,
+        minrange : 0
+        maxrange : 1
+        minthreshold : 0.1
+        maxthreshold : 1
+        opacity : 0.125
        
     # gl stuff
     drawScene = () ->
@@ -146,11 +173,9 @@ $ ->
             this.enableVertexAttribArray("aVertexPosition")
             this.gl.clearColor 0.75, 0.75, 0.75, 1
             this.gl.enable this.gl.DEPTH_TEST
-            this.minrange = 0.0
-            this.maxrange = 1.0
-            this.minthreshold = 0.1
-            this.maxthreshold = 1.0
-            this.opacity = 0.125
+
+            for k, v of defaults
+                this[k] = v
             this.rainbow = true
 
             @xLimits = [0, 1]
@@ -687,7 +712,7 @@ $ ->
         min : 0
         max : 1
         step : 0.01
-        values : [0, 1]
+        values : [widget.minrange, widget.maxrange]
         range : true
         rangeDrag : true
         slide : (event, ui) ->
@@ -699,7 +724,7 @@ $ ->
         min : 0
         max : 1
         step : 0.01
-        values : [widget.minthreshold, 1]
+        values : [widget.minthreshold, widget.maxthreshold]
         range : true
         rangeDrag : true
         slide : (event, ui) ->
@@ -713,7 +738,7 @@ $ ->
         min : 0
         max : 1
         step : 0.01
-        value : 0.5
+        value : (widget.minthreshold + widget.maxthreshold) * 0.5
         slide : (event, ui) ->
             [min, max] = [widget.minthreshold, widget.maxthreshold]
             hw = (max-min)/2
