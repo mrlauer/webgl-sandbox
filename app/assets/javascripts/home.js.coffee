@@ -74,18 +74,15 @@ $ ->
         minthreshold : 0.1
         maxthreshold : 1
         opacity : 0.125
+        backgroundbrightness : 0
        
     # gl stuff
     drawScene = () ->
         widget = this
         gl = this.gl
         gl.viewport 0, 0, gl.viewportWidth, gl.viewportHeight
-        # for volume display a black background works best.
-        # for slices it's a little nicer (IMO) gray
-        if @volumeOn
-            this.gl.clearColor 0, 0, 0, 1
-        else
-            this.gl.clearColor 0.75, 0.75, 0.75, 1
+        v = @backgroundbrightness
+        this.gl.clearColor v, v, v, 1
 
         gl.clear (gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
         gl.enable(gl.BLEND)
@@ -774,6 +771,15 @@ $ ->
         value : opacityToUi widget.opacity
         slide : (event, ui) ->
             widget.opacity = uiToOpacity ui.value
+            widget.draw()
+
+    $('#background-slider').slider
+        min : 0
+        max : 1
+        step : 1/256
+        value : widget.backgroundbrightness
+        slide : (event, ui) ->
+            widget.backgroundbrightness = ui.value
             widget.draw()
 
     bindSliceControls = (widget, slice, idx) ->
