@@ -708,8 +708,10 @@ $ ->
     #load_url '/binary3d'
     load_url '/headData'
 
+#     $('#fileselect').selectmenu()
+
     $('#load-head').click ->
-        load_url '/headData'
+        load_url '/static/nrrd/' + $('#fileselect option:selected').text()
 
     _sliderValues = (slider, ui) ->
         return ui.values
