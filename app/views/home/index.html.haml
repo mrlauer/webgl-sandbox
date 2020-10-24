@@ -27,12 +27,13 @@
   #z-trim-slider.slider-control.volume-control.hidden
   %h4 Load Local File
   #load-file.control
-  %h4 Load Remote File
-  %select#fileselect
-    - @files.each do |f|
-      %option{:value => f} #{f}
-  %div
-    %button#load-head.control Load Head
+  - if @files.any?
+    %h4 Load Remote File
+    %select#fileselect
+      - @files.each do |f|
+        %option{:value => f} #{File::basename f, ".nrrd"}
+    %div
+      %button#load-remote.control Load
   #status.control.status
   %button#copyurl Copy URL
 #main

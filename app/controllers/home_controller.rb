@@ -2,7 +2,7 @@ require "base64"
 
 class HomeController < ApplicationController
   def basedir
-    return File::join ENV['HOME'], "Downloads"
+    return ENV.fetch('STATIC_NRRD') { File::join ENV["HOME"], "static", "nrrd" }
   end
 
   def index
@@ -109,7 +109,7 @@ encoding: raw
   end
 
   def nrrdData
-    filename = File::join basedir(), params[:filename] + ".nrrd"
+    filename = File::join basedir(), params[:filename] + "." + params[:format]
     send_file filename, filename: filename, type: 'application/nrrd'
   end
 

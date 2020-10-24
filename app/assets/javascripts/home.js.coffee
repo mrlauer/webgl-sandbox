@@ -710,8 +710,9 @@ $ ->
 
 #     $('#fileselect').selectmenu()
 
-    $('#load-head').click ->
-        load_url '/static/nrrd/' + $('#fileselect option:selected').text()
+    $('#load-remote').click ->
+        console.log "LOAD"
+        load_url '/static/nrrd/' + $('#fileselect').val()
 
     _sliderValues = (slider, ui) ->
         return ui.values
