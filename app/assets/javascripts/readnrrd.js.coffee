@@ -67,8 +67,8 @@ class NrrdReader
         # Some assertions
         if !@isNrrd
             @error "Not an NRRD file"
-        if @encoding != 'raw'
-            @error "Only raw encoding is allowed"
+        if @encoding != 'raw' and @encoding != 'gzip'
+            @error "Only raw and gzip encodings are allowed"
 
         # make sure we have some spacing
         if not @vectors?
@@ -85,8 +85,14 @@ class NrrdReader
     makeValueArray : ->
         sz = 1
         sz *= s for s in @sizes
-        pos = @pos
-        data = @data
+        if @encoding == 'gzip'
+            # gunzip it the rest of the data
+            data = pako.inflate @data.substring(@pos) #, { to: 'string' }
+            data.charCodeAt = (i) -> this[i]
+            pos = 0
+        else
+            pos = @pos
+            data = @data
         arr = null
         max = 0
         min = Infinity

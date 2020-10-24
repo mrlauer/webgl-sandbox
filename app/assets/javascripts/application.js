@@ -10,3 +10,4 @@
 //= require jquery-mousewheel
 //= require jquery-dragslider.js
 //= require jquery.ui.touch-punch
+//= require pako.js
