@@ -804,7 +804,7 @@ $ ->
         trimSliderSelector = "##{coord}-trim-slider"
         if $(trimSliderSelector).slider('instance')
             $(trimSliderSelector).slider('destroy')
-        $(trimSliderSelector).slider
+        $(trimSliderSelector).dragslider
             min : 0
             max : 1
             step : 1 / (slice.depth - 1)
