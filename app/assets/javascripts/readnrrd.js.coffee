@@ -14,8 +14,8 @@ class NrrdReader
     fieldFunctions :
         'type' : (data) ->
             switch data
-                when 'unsigned char', 'uint8' then
-                when 'signed char', 'int8' then
+                when 'unsigned char', 'uchar', 'uint8' then
+                when 'signed char', 'char', 'int8' then
                 when 'short', 'signed short', 'short int', 'int16' then
                 when 'int', 'int32' then
                 else
@@ -97,14 +97,14 @@ class NrrdReader
         max = 0
         min = Infinity
         switch @type
-            when 'signed char', 'int8'
+            when 'signed char', 'char', 'int8'
                 arr = new Int8Array sz
                 for i in [0 ... sz ]
                     iidx = pos + i
                     arr[i] = (data.charCodeAt(iidx) & 0xff)
                     max = Math.max max, arr[i]
                     min = Math.min min, arr[i]
-            when 'unsigned char', 'uint8'
+            when 'unsigned char', 'uchar', 'uint8'
                 arr = new Uint8Array sz
                 for i in [0 ... sz ]
                     iidx = pos + i
