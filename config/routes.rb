@@ -56,6 +56,8 @@ Image::Application.routes.draw do
   get "/binary3d" => "home#binary3d"
   get "/headData" => "home#headData"
 
+  get "/static/nrrd/:filename" => "home#nrrdData"
+
   get "/jstests/nrrd/:type" => "jstests#nrrd"
 
   # javascript testing

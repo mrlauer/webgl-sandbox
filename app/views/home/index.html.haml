@@ -28,6 +28,9 @@
   %h4 Load Local File
   #load-file.control
   %h4 Load Remote File
+  %select#fileselect
+    - @files.each do |f|
+      %option{:value => f} #{f}
   %div
     %button#load-head.control Load Head
   #status.control.status

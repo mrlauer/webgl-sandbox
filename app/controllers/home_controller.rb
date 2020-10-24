@@ -1,7 +1,15 @@
 require "base64"
 
 class HomeController < ApplicationController
+  def basedir
+    return File::join ENV['HOME'], "Downloads"
+  end
+
   def index
+    # How to determine the directory?
+    # Hack for now: hardcode it!
+    nrrdFiles = Dir.glob '*.nrrd', base: basedir()
+    @files = nrrdFiles
   end
 
   def binary
@@ -98,6 +106,11 @@ encoding: raw
   def headData
       response.header['Content-Encoding'] = 'gzip'
       send_file Rails.root.join('data', 'data2.gz'), filename: 'headData.nrrd', type: 'application/nrrd'
+  end
+
+  def nrrdData
+    filename = File::join basedir(), params[:filename] + ".nrrd"
+    send_file filename, filename: filename, type: 'application/nrrd'
   end
 
 end
