@@ -53,10 +53,12 @@ test "simple nrrd reader", ->
     reader = new NrrdReader badEncoding
     raises (-> reader.parseHeader()), "Not an nrrd file"
 
-testNrrd = (type) ->
+testNrrd = (type, encoding = null) ->
     # Get the file
     stop()
     url = "/jstests/nrrd/#{type}"
+    if encoding
+        url += "/#{encoding}"
     $.ajax url,
         type: 'GET',
         beforeSend: (xhr, settings) ->
@@ -67,6 +69,10 @@ testNrrd = (type) ->
             reader.parseHeader()
             equal reader.type, type, 'correct type'
             values = reader.makeValueArray()
+
+            sz = reader.sizes.reduce ((x, y) -> x*y), 1
+            equal sz, values.length
+
             startVal = 1
             for idx in [0 ... values.length]
                 val = values[idx]
@@ -75,8 +81,17 @@ testNrrd = (type) ->
 test "test nrrd int8", ->
     testNrrd 'int8'
 
+test "test nrrd int8 gzip", ->
+    testNrrd 'int8', 'gzip'
+
 test "test nrrd short", ->
     testNrrd 'short'
 
+test "test nrrd short", ->
+    testNrrd 'short', 'gzip'
+
 test "test nrrd int", ->
     testNrrd 'int'
+
+test "test nrrd int", ->
+    testNrrd 'int', 'gzip'

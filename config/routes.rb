@@ -58,7 +58,8 @@ Image::Application.routes.draw do
 
   get "/static/nrrd/:filename" => "home#nrrdData"
 
-  get "/jstests/nrrd/:type" => "jstests#nrrd"
+  get "/jstests/nrrd/:type", to: "jstests#nrrd" , defaults: { encoding: "raw" }
+  get "/jstests/nrrd/:type/:encoding", to: "jstests#nrrd" , defaults: { encoding: "raw" }
 
   # javascript testing
   get "/jstests" => "jstests#jstests"
