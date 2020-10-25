@@ -96,55 +96,71 @@ class NrrdReader
         arr = null
         max = 0
         min = Infinity
-        switch @type
-            when 'signed char', 'char', 'int8'
-                arr = new Int8Array sz
-                for i in [0 ... sz ]
-                    iidx = pos + i
-                    arr[i] = (data.charCodeAt(iidx) & 0xff)
-                    max = Math.max max, arr[i]
-                    min = Math.min min, arr[i]
-            when 'unsigned char', 'uchar', 'uint8'
-                arr = new Uint8Array sz
-                for i in [0 ... sz ]
-                    iidx = pos + i
-                    arr[i] = (data.charCodeAt(iidx) & 0xff)
-                    max = Math.max max, arr[i]
-                    min = Math.min min, arr[i]
-            when 'short', 'signed short', 'short int', 'int16'
-                arr = new Int16Array sz
-                if @endian == 'big'
+        # TODO: check endianness
+        if data instanceof Uint8Array
+            switch @type
+                when 'signed char', 'char', 'int8'
+                    arr = new Int8Array(data.buffer, data.byte_offset, data.byte_length)
+                when 'unsigned char', 'uchar', 'uint8'
+                    arr = new Uint8Array(data.buffer, data.byte_offset, data.byte_length)
+                when 'short', 'signed short', 'short int', 'int16'
+                    if getEndianness() == @endian
+                        arr = new Int16Array(data.buffer, data.byte_offset, data.byte_length)
+                when 'int', 'int32'
+                    if getEndianness() == @endian
+                        arr = new Int32Array(data.buffer, data.byte_offset, data.byte_length)
+             min = arr.reduce ((current, x) -> Math.min(current, x)), min
+             max = arr.reduce ((current, x) -> Math.max(current, x)), max
+        if not arr
+            switch @type
+                when 'signed char', 'char', 'int8'
+                    arr = new Int8Array sz
                     for i in [0 ... sz ]
-                        iidx = pos + i*2
-                        arr[i] = (data.charCodeAt(iidx) & 0xff) * 256 + (data.charCodeAt(iidx+1) & 0xff)
+                        iidx = pos + i
+                        arr[i] = (data.charCodeAt(iidx) & 0xff)
                         max = Math.max max, arr[i]
                         min = Math.min min, arr[i]
-                else
+                when 'unsigned char', 'uchar', 'uint8'
+                    arr = new Uint8Array sz
                     for i in [0 ... sz ]
-                        iidx = pos + i*2
-                        arr[i] = (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
+                        iidx = pos + i
+                        arr[i] = (data.charCodeAt(iidx) & 0xff)
                         max = Math.max max, arr[i]
                         min = Math.min min, arr[i]
-            when 'int', 'int32'
-                arr = new Int32Array sz
-                if @endian == 'big'
-                    for i in [0 ... sz ]
-                        iidx = pos + i*4
-                        arr[i] = (data.charCodeAt(iidx) & 0xff) * 0x1000000 \
-                            + (data.charCodeAt(iidx+1) & 0xff) * 0x10000 \
-                            + (data.charCodeAt(iidx+2) & 0xff) * 256 \
-                            + (data.charCodeAt(iidx+3) & 0xff)
-                        max = Math.max max, arr[i]
-                        min = Math.min min, arr[i]
-                else
-                    for i in [0 ... sz ]
-                        iidx = pos + i*4
-                        arr[i] = (data.charCodeAt(iidx+3) & 0xff) * 0x1000000 \
-                            + (data.charCodeAt(iidx+2) & 0xff) * 0x10000 \
-                            + (data.charCodeAt(iidx+1) & 0xff) * 256 \
-                            + (data.charCodeAt(iidx) & 0xff)
-                        max = Math.max max, arr[i]
-                        min = Math.min min, arr[i]
+                when 'short', 'signed short', 'short int', 'int16'
+                    arr = new Int16Array sz
+                    if @endian == 'big'
+                        for i in [0 ... sz ]
+                            iidx = pos + i*2
+                            arr[i] = (data.charCodeAt(iidx) & 0xff) * 256 + (data.charCodeAt(iidx+1) & 0xff)
+                            max = Math.max max, arr[i]
+                            min = Math.min min, arr[i]
+                    else
+                        for i in [0 ... sz ]
+                            iidx = pos + i*2
+                            arr[i] = (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
+                            max = Math.max max, arr[i]
+                            min = Math.min min, arr[i]
+                when 'int', 'int32'
+                    arr = new Int32Array sz
+                    if @endian == 'big'
+                        for i in [0 ... sz ]
+                            iidx = pos + i*4
+                            arr[i] = (data.charCodeAt(iidx) & 0xff) * 0x1000000 \
+                                + (data.charCodeAt(iidx+1) & 0xff) * 0x10000 \
+                                + (data.charCodeAt(iidx+2) & 0xff) * 256 \
+                                + (data.charCodeAt(iidx+3) & 0xff)
+                            max = Math.max max, arr[i]
+                            min = Math.min min, arr[i]
+                    else
+                        for i in [0 ... sz ]
+                            iidx = pos + i*4
+                            arr[i] = (data.charCodeAt(iidx+3) & 0xff) * 0x1000000 \
+                                + (data.charCodeAt(iidx+2) & 0xff) * 0x10000 \
+                                + (data.charCodeAt(iidx+1) & 0xff) * 256 \
+                                + (data.charCodeAt(iidx) & 0xff)
+                            max = Math.max max, arr[i]
+                            min = Math.min min, arr[i]
         @max ?= max
         if min < 0
             for i in [0 ... sz]
@@ -180,5 +196,17 @@ class NrrdReader
                         + (data.charCodeAt(iidx+1) & 0xff) * 256 \
                         + (data.charCodeAt(iidx) & 0xff))
         
+getEndianness = () ->
+    arrayBuffer = new ArrayBuffer(2)
+    uint8Array = new Uint8Array(arrayBuffer)
+    uint16array = new Uint16Array(arrayBuffer)
+    uint8Array[0] = 0xAA
+    uint8Array[1] = 0xBB
+    if uint16array[0] == 0xBBAA
+        return "little"
+    if uint16array[0] == 0xAABB
+        return "big"
+    else
+        throw new Error "Bad endianness"
 
 exports.NrrdReader = NrrdReader
