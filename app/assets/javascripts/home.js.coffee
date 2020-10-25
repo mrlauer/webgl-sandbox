@@ -703,7 +703,8 @@ $ ->
             beforeSend: (xhr, settings) ->
                 xhr.overrideMimeType('text/plain; charset=x-user-defined')
             success: (data, status, xhr) ->
-                load_data widget, data
+                setStatus "Loading data..."
+                setTimeout (() -> load_data widget, data), 0
 
     #load_url '/binary3d'
     load_url '/headData'
@@ -712,7 +713,7 @@ $ ->
 
     $('#load-remote').click ->
         console.log "LOAD"
-        load_url '/static/nrrd/' + $('#fileselect').val()
+        load_url $('#fileselect').val()
 
     _sliderValues = (slider, ui) ->
         return ui.values

@@ -3,7 +3,8 @@
 - content_for :shaders do
   = render :partial => 'texture-vertex-shader'
   = render :partial => 'texture-fragment-shader', :locals => { :dimension => 2 }
-%h1 Brains
+%a{ href: "/" }
+  %h1 Brains
 #controls
   %h4 Window/Level
   #window-width-slider.slider-control
@@ -31,7 +32,7 @@
     %h4 Load Remote File
     %select#fileselect
       - @files.each do |f|
-        %option{:value => f} #{File::basename f, ".nrrd"}
+        %option{:value => '/static/nrrd/' + f} #{File::basename f, ".nrrd"}
     %div
       %button#load-remote.control Load
   #status.control.status

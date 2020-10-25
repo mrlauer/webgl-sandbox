@@ -8,7 +8,7 @@ class HomeController < ApplicationController
   def index
     # How to determine the directory?
     # Hack for now: hardcode it!
-    nrrdFiles = Dir.glob '*.nrrd', base: basedir()
+    nrrdFiles = Dir.glob '*.nrrd', base: basedir
     @files = nrrdFiles
   end
 
@@ -109,7 +109,7 @@ encoding: raw
   end
 
   def nrrdData
-    filename = File::join basedir(), params[:filename] + "." + params[:format]
+    filename = File::join basedir, params[:filename] + "." + params[:format]
     send_file filename, filename: filename, type: 'application/nrrd'
   end
 
