@@ -8,11 +8,12 @@ class JstestsController < ApplicationController
         width = 3
         height = 4
         depth = 5
+        endian = request.query_parameters.fetch "endian", "little"
         hdr = """NRRD0004
 type: #{type}
 dimension: 3
 sizes: #{width} #{height} #{depth}
-endian: little
+endian: #{endian}
 encoding: #{encoding}
 
 """
@@ -33,6 +34,14 @@ encoding: #{encoding}
             fmt = 'V'
         else
             fmt = 'N'
+        end
+
+        if "svlV".include? fmt then
+          if endian == 'little' then
+            fmt += '<'
+          else
+            fmt += '>'
+          end
         end
 
         fmt += '*'
