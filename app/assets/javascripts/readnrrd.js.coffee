@@ -100,15 +100,15 @@ class NrrdReader
         if data instanceof Uint8Array
             switch @type
                 when 'signed char', 'char', 'int8'
-                    arr = new Int8Array(data.buffer, data.byte_offset, data.byte_length)
+                    arr = new Int8Array(data.buffer, data.byteOffset, data.byteLength)
                 when 'unsigned char', 'uchar', 'uint8'
-                    arr = new Uint8Array(data.buffer, data.byte_offset, data.byte_length)
+                    arr = new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
                 when 'short', 'signed short', 'short int', 'int16'
                     if getEndianness() == @endian
-                        arr = new Int16Array(data.buffer, data.byte_offset, data.byte_length)
+                        arr = new Int16Array(data.buffer, data.byteOffset, data.byteLength/2)
                 when 'int', 'int32'
                     if getEndianness() == @endian
-                        arr = new Int32Array(data.buffer, data.byte_offset, data.byte_length)
+                        arr = new Int32Array(data.buffer, data.byteOffset, data.byteLength/4)
              min = arr.reduce ((current, x) -> Math.min(current, x)), min
              max = arr.reduce ((current, x) -> Math.max(current, x)), max
         if not arr
