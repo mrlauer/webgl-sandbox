@@ -5,8 +5,8 @@ class JstestsController < ApplicationController
     def nrrd
         type = params[:type]
         encoding = params[:encoding]
-        width = 5
-        height = 5
+        width = 3
+        height = 4
         depth = 5
         hdr = """NRRD0004
 type: #{type}

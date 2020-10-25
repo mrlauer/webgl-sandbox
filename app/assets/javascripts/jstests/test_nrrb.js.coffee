@@ -73,6 +73,8 @@ testNrrd = (type, encoding = null) ->
             sz = reader.sizes.reduce ((x, y) -> x*y), 1
             equal sz, values.length
 
+            equal sz, reader.max
+
             startVal = 1
             for idx in [0 ... values.length]
                 val = values[idx]

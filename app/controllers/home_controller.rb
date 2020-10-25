@@ -9,7 +9,8 @@ class HomeController < ApplicationController
     # How to determine the directory?
     # Hack for now: hardcode it!
     nrrdFiles = Dir.glob '*.nrrd', base: basedir
-    @files = nrrdFiles
+    @files = nrrdFiles.sort.sort &:casecmp # sorts case-sensitively, then insensitively, to get
+                                           # upper-case before lower-case
   end
 
   def binary

@@ -109,8 +109,6 @@ class NrrdReader
                 when 'int', 'int32'
                     if getEndianness() == @endian
                         arr = new Int32Array(data.buffer, data.byteOffset, data.byteLength/4)
-             min = arr.reduce ((current, x) -> Math.min(current, x)), min
-             max = arr.reduce ((current, x) -> Math.max(current, x)), max
         if not arr
             switch @type
                 when 'signed char', 'char', 'int8'
@@ -118,29 +116,21 @@ class NrrdReader
                     for i in [0 ... sz ]
                         iidx = pos + i
                         arr[i] = (data.charCodeAt(iidx) & 0xff)
-                        max = Math.max max, arr[i]
-                        min = Math.min min, arr[i]
                 when 'unsigned char', 'uchar', 'uint8'
                     arr = new Uint8Array sz
                     for i in [0 ... sz ]
                         iidx = pos + i
                         arr[i] = (data.charCodeAt(iidx) & 0xff)
-                        max = Math.max max, arr[i]
-                        min = Math.min min, arr[i]
                 when 'short', 'signed short', 'short int', 'int16'
                     arr = new Int16Array sz
                     if @endian == 'big'
                         for i in [0 ... sz ]
                             iidx = pos + i*2
                             arr[i] = (data.charCodeAt(iidx) & 0xff) * 256 + (data.charCodeAt(iidx+1) & 0xff)
-                            max = Math.max max, arr[i]
-                            min = Math.min min, arr[i]
                     else
                         for i in [0 ... sz ]
                             iidx = pos + i*2
                             arr[i] = (data.charCodeAt(iidx+1) & 0xff) * 256 + (data.charCodeAt(iidx) & 0xff)
-                            max = Math.max max, arr[i]
-                            min = Math.min min, arr[i]
                 when 'int', 'int32'
                     arr = new Int32Array sz
                     if @endian == 'big'
@@ -150,8 +140,6 @@ class NrrdReader
                                 + (data.charCodeAt(iidx+1) & 0xff) * 0x10000 \
                                 + (data.charCodeAt(iidx+2) & 0xff) * 256 \
                                 + (data.charCodeAt(iidx+3) & 0xff)
-                            max = Math.max max, arr[i]
-                            min = Math.min min, arr[i]
                     else
                         for i in [0 ... sz ]
                             iidx = pos + i*4
@@ -159,8 +147,8 @@ class NrrdReader
                                 + (data.charCodeAt(iidx+2) & 0xff) * 0x10000 \
                                 + (data.charCodeAt(iidx+1) & 0xff) * 256 \
                                 + (data.charCodeAt(iidx) & 0xff)
-                            max = Math.max max, arr[i]
-                            min = Math.min min, arr[i]
+        min = arr.reduce ((current, x) -> Math.min(current, x)), min
+        max = arr.reduce ((current, x) -> Math.max(current, x)), max
         @max ?= max
         if min < 0
             for i in [0 ... sz]
