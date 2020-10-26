@@ -45,6 +45,9 @@ group :development do
   # Capistrano v3 should use '~> 1.0.0'
   # Capistrano v3.8+ should use '~> 1.2.0'
   gem 'capistrano-local-precompile', require: false
+
+  gem 'ruby-debug-ide'
+  gem 'debase'
 end
 
 # To use debugger
