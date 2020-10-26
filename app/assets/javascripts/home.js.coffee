@@ -861,7 +861,7 @@ $ ->
             widget.draw()
 
     $('#textureInterpolate').
-        attr('checked', if widget.interpolate then "checked" else null).
+        attr('checked', if widget.interpolateTextures then "checked" else null).
         button().
         click ->
             checked = $(this).is(':checked')
@@ -871,6 +871,9 @@ $ ->
                 for texture in slice.textures
                     gl = widget.gl
                     gl.bindTexture gl.TEXTURE_2D, texture.texture
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, interp)
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, interp)
+                    gl.bindTexture gl.TEXTURE_2D, texture.textureHigh
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, interp)
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, interp)
                     gl.bindTexture gl.TEXTURE_2D, null
