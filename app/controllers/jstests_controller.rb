@@ -1,4 +1,6 @@
 class JstestsController < ApplicationController
+    include ActionController::Live
+
     def jstests
     end
 
@@ -46,17 +48,18 @@ encoding: #{encoding}
 
         fmt += '*'
 
+        response.stream.write hdr
+
         payload = data.pack fmt
         if params[:encoding] == "gzip" then
-          io = StringIO.new
-          gz = Zlib::GzipWriter.new(io)
+          gz = Zlib::GzipWriter.new(response.stream)
           gz.write payload
           gz.close
-          payload = io.string
+        else
+          response.stream.write payload
         end
 
-        nrrd = hdr + payload
-
-        send_data nrrd, :disposition => 'inline'
+    ensure
+        response.stream.close
     end
 end
