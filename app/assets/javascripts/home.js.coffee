@@ -745,13 +745,12 @@ $ ->
             widget.draw()
             drawHistogram()
 
-    $('#enable-threshold2'
-        .attr(':checked', if widgent.enableThreshold2 then "checked" else null)
+    $('#enable-threshold2')
+        .attr(':checked', if widget.enableThreshold2 then "checked" else null)
         .button()
         .click ->
             widget.enableThreshold2 = $(this).is ':checked'
             $('#threshold2-div').toggleClass 'hidden', !widget.enableThreshold2
-    $('#threshold2-div').toggleClass 'hidden', !$(this).is(':checked')
 
     $('#threshold2-slider').dragslider
         min : 0
