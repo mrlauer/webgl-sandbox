@@ -744,6 +744,24 @@ $ ->
             widget.draw()
             drawHistogram()
 
+    $('#enable-threshold2').button().click ->
+        $('#threshold2-div').toggleClass 'hidden', !$(this).is(':checked')
+    $('#threshold2-div').toggleClass 'hidden', !$(this).is(':checked')
+
+    $('#threshold2-slider').dragslider
+        min : 0
+        max : 1
+        step : 0.01
+        values : [widget.minthreshold, widget.maxthreshold]
+        range : true
+        rangeDrag : true
+        slide : (event, ui) ->
+            [widget.minthreshold, widget.maxthreshold] = _sliderValues $(this).slider, ui
+            c = (widget.minthreshold + widget.maxthreshold)/2
+            $('#threshold-center-slider').slider 'value', c
+            widget.draw()
+            drawHistogram()
+
     $('#threshold-center-slider').slider
         min : 0
         max : 1
