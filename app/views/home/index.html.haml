@@ -14,8 +14,6 @@
   #threshold-slider.slider-control
   %h4 Threshold Center
   #threshold-center-slider.slider-control
-  %input.control#enable-threshold2{:type=>"checkbox"}
-  %label.control{:for => "enable-threshold2"} Enable Second Threshold
   %div#threshold2-div
     %h4 Second Threshold
     #threshold2-slider.slider-control
@@ -76,3 +74,6 @@
         %label{:for => "rainbow"} Rainbow
         %input#textureInterpolate{:type=>"checkbox"}/
         %label{:for => "textureInterpolate"} Interpolate
+      %div
+        %input.control#enable-threshold2{:type=>"checkbox"}
+        %label{:for => "enable-threshold2"} Enable Second Threshold

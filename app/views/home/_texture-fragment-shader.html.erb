@@ -14,6 +14,7 @@
     uniform bool uRainbow;
 
     uniform bool uMultiple;
+    uniform bool uEnableThreshold2;
 
     uniform float uMaxLimit;
     uniform float uMax;
@@ -40,7 +41,9 @@
         vec3 light = (low * 255.0 + high * (255.0 * 256.0) ) / uMaxLimit;
 
         const float eps=0.001;
-        if(light.r < uMinThreshold-eps || light.r > uMaxThreshold+eps) {
+        float l = light.r;
+        if((light.r < uMinThreshold-eps || light.r > uMaxThreshold+eps) &&
+           (!uEnableThreshold2 || l < uMinThreshold2-eps || l > uMaxThreshold2+eps)) {
             discard;
             return;
         }

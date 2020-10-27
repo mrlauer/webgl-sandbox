@@ -73,6 +73,8 @@ $ ->
         maxrange : 1
         minthreshold : 0.1
         maxthreshold : 1
+        minthreshold2 : 0.1
+        maxthreshold2 : 1
         opacity : 0.125
         backgroundbrightness : 0
        
@@ -568,6 +570,9 @@ $ ->
             widget.uniform1f('uMax', widget.maxrange)
             widget.uniform1f('uMinThreshold', widget.minthreshold)
             widget.uniform1f('uMaxThreshold', widget.maxthreshold)
+            widget.uniform1f('uMinThreshold2', widget.minthreshold2)
+            widget.uniform1f('uMaxThreshold2', widget.maxthreshold2)
+            widget.uniform1i 'uEnableThreshold2', widget.enableThreshold2
 
             widget.uniform2f 'uLocalMin', @bounds[0][0], @bounds[1][0]
             widget.uniform2f 'uLocalMax', @bounds[0][1], @bounds[1][1]
@@ -745,6 +750,7 @@ $ ->
             widget.draw()
             drawHistogram()
 
+    $('#threshold2-div').toggleClass 'hidden', !widget.enableThreshold2
     $('#enable-threshold2')
         .attr(':checked', if widget.enableThreshold2 then "checked" else null)
         .button()
@@ -756,13 +762,11 @@ $ ->
         min : 0
         max : 1
         step : 0.01
-        values : [widget.minthreshold, widget.maxthreshold]
+        values : [widget.minthreshold2, widget.maxthreshold2]
         range : true
         rangeDrag : true
         slide : (event, ui) ->
-            [widget.minthreshold, widget.maxthreshold] = _sliderValues $(this).slider, ui
-            c = (widget.minthreshold + widget.maxthreshold)/2
-            $('#threshold-center-slider').slider 'value', c
+            [widget.minthreshold2, widget.maxthreshold2] = _sliderValues $(this).slider, ui
             widget.draw()
             drawHistogram()
 
