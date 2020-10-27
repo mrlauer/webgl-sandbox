@@ -173,6 +173,7 @@ $ ->
 
             for k, v of defaults
                 this[k] = v
+            this.enableThreshold2 = false
             this.rainbow = true
 
             @xLimits = [0, 1]
@@ -744,8 +745,12 @@ $ ->
             widget.draw()
             drawHistogram()
 
-    $('#enable-threshold2').button().click ->
-        $('#threshold2-div').toggleClass 'hidden', !$(this).is(':checked')
+    $('#enable-threshold2'
+        .attr(':checked', if widgent.enableThreshold2 then "checked" else null)
+        .button()
+        .click ->
+            widget.enableThreshold2 = $(this).is ':checked'
+            $('#threshold2-div').toggleClass 'hidden', !widget.enableThreshold2
     $('#threshold2-div').toggleClass 'hidden', !$(this).is(':checked')
 
     $('#threshold2-slider').dragslider
