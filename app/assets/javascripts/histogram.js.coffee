@@ -57,8 +57,7 @@
             intervals = combineIntervals self.options.thresholds
             values = [].concat 0, intervals..., 1
             for i in [0 ... values.length] by 2
-                low = values[i]
-                high = values[i+1]
+                [low, high] = values[i..i+1]
                 if high > low
                     ctx.fillRect low * w, 0, (high - low) * w, h
 
