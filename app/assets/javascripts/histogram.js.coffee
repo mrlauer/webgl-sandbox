@@ -7,8 +7,7 @@
         options:
             minRange: 0
             maxRange: 1
-            minThreshold: 0
-            maxThreshold: 1
+            thresholds: [[0, 1]]
             rainbow: false
             data: null
         _create: ->
@@ -41,10 +40,11 @@
 
             # threshold
             ctx.fillStyle = "black"
-            if self.options.minThreshold > 0
-                ctx.fillRect 0, 0, self.options.minThreshold * w, h
-            if self.options.maxThreshold < 1
-                ctx.fillRect self.options.maxThreshold * w, 0, (1-self.options.maxThreshold)*w, h
+            [minThreshold, maxThreshold] = self.options.thresholds[0]
+            if minThreshold > 0
+                ctx.fillRect 0, 0, minThreshold * w, h
+            if maxThreshold < 1
+                ctx.fillRect maxThreshold * w, 0, (1-maxThreshold)*w, h
 
             #data
             data = self.options.data
