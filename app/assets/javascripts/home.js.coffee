@@ -912,10 +912,13 @@ $ ->
 
     $('#histogram').histogram()
     drawHistogram = ->
+        thresholds = [[widget.minthreshold, widget.maxthreshold]]
+        if widget.enableThreshold2
+            thresholds.push [widget.minthreshold2, widget.maxthreshold2]
         $('#histogram').histogram 'option',
             minRange : widget.minrange
             maxRange : widget.maxrange
-            thresholds : [[widget.minthreshold, widget.maxthreshold]]
+            thresholds : thresholds
             rainbow : widget.rainbow
         $('#histogram').histogram 'draw'
 

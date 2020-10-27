@@ -3,6 +3,20 @@
 #
 
 (($) ->
+
+    combineIntervals = (intervals) ->
+        sorted = [intervals...]
+        sorted.sort()
+
+        out = []
+        for int in sorted
+            [..., last] = out
+            if not last or int[0] > last[1]
+                out.push int.slice()
+            else if int[1] > last[1]
+                last[1] = int[1]
+        out
+
     $.widget "babybrain.histogram",
         options:
             minRange: 0
@@ -40,11 +54,13 @@
 
             # threshold
             ctx.fillStyle = "black"
-            [minThreshold, maxThreshold] = self.options.thresholds[0]
-            if minThreshold > 0
-                ctx.fillRect 0, 0, minThreshold * w, h
-            if maxThreshold < 1
-                ctx.fillRect maxThreshold * w, 0, (1-maxThreshold)*w, h
+            intervals = combineIntervals self.options.thresholds
+            values = [].concat 0, intervals..., 1
+            for i in [0 ... values.length] by 2
+                low = values[i]
+                high = values[i+1]
+                if high > low
+                    ctx.fillRect low * w, 0, (high - low) * w, h
 
             #data
             data = self.options.data
