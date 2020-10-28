@@ -9,6 +9,10 @@
             "type": "Ruby",
             "request": "launch",
             "program": "${workspaceRoot}/bin/rails",
+            "env": {
+                "PATH": "/Users/mrlauer/.rvm/gems/ruby-2.7.0/bin:/Users/mrlauer/.rvm/gems/ruby-2.7.0@global/bin:/Users/mrlauer/.rvm/rubies/ruby-2.7.0/bin:$PATH",
+                "GEM_PATH": "/Users/mrlauer/.rvm/gems/ruby-2.7.0:/Users/mrlauer/.rvm/gems/ruby-2.7.0@global",
+            },
             "cwd": "${workspaceRoot}",
             "args": [
                 "server"
