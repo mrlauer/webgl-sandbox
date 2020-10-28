@@ -14,6 +14,7 @@
     uniform bool uRainbow;
 
     uniform bool uMultiple;
+    uniform bool uEnableThreshold;
     uniform bool uEnableThreshold2;
 
     uniform float uMaxLimit;
@@ -42,7 +43,7 @@
 
         const float eps=0.001;
         float l = light.r;
-        if((light.r < uMinThreshold-eps || light.r > uMaxThreshold+eps) &&
+        if((!uEnableThreshold || light.r < uMinThreshold-eps || light.r > uMaxThreshold+eps) &&
            (!uEnableThreshold2 || l < uMinThreshold2-eps || l > uMaxThreshold2+eps)) {
             discard;
             return;

@@ -175,6 +175,7 @@ $ ->
 
             for k, v of defaults
                 this[k] = v
+            this.enableThreshold = true
             this.enableThreshold2 = false
             this.rainbow = true
 
@@ -568,6 +569,7 @@ $ ->
 
             widget.uniform1f('uMin', widget.minrange)
             widget.uniform1f('uMax', widget.maxrange)
+            widget.uniform1i 'uEnableThreshold', widget.enableThreshold
             widget.uniform1f('uMinThreshold', widget.minthreshold)
             widget.uniform1f('uMaxThreshold', widget.maxthreshold)
             widget.uniform1f('uMinThreshold2', widget.minthreshold2)
@@ -736,41 +738,35 @@ $ ->
             widget.draw()
             drawHistogram()
 
-    $('#threshold-slider').dragslider
-        min : 0
-        max : 1
-        step : 0.01
-        values : [widget.minthreshold, widget.maxthreshold]
-        range : true
-        rangeDrag : true
-        slide : (event, ui) ->
-            [widget.minthreshold, widget.maxthreshold] = _sliderValues $(this).slider, ui
-            c = (widget.minthreshold + widget.maxthreshold)/2
-            $('#threshold-center-slider').slider 'value', c
-            widget.draw()
-            drawHistogram()
+    setupThreshold = (name) ->
+        min = "min#{name}"
+        max = "max#{name}"
+        $("##{name}-slider").dragslider
+            min : 0
+            max : 1
+            step : 0.01
+            values : [widget[min], widget[max]]
+            range : true
+            rangeDrag : true
+            slide : (event, ui) ->
+                [widget[min], widget[max]] = _sliderValues $(this).slider, ui
+                c = (widget[min] + widget[max])/2
+                $("##{name}-center-slider").slider 'value', c
+                widget.draw()
+                drawHistogram()
+    
+    setupThreshold "threshold"
 
     $('#threshold2-div').toggleClass 'hidden', !widget.enableThreshold2
     $('#enable-threshold2')
         .attr(':checked', if widget.enableThreshold2 then "checked" else null)
-        .button()
         .click ->
             widget.enableThreshold2 = $(this).is ':checked'
             $('#threshold2-div').toggleClass 'hidden', !widget.enableThreshold2
             widget.draw()
             drawHistogram()
 
-    $('#threshold2-slider').dragslider
-        min : 0
-        max : 1
-        step : 0.01
-        values : [widget.minthreshold2, widget.maxthreshold2]
-        range : true
-        rangeDrag : true
-        slide : (event, ui) ->
-            [widget.minthreshold2, widget.maxthreshold2] = _sliderValues $(this).slider, ui
-            widget.draw()
-            drawHistogram()
+    setupThreshold "threshold2"
 
     $('#threshold-center-slider').slider
         min : 0
