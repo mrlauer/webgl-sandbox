@@ -7,47 +7,54 @@
   %h1
     %a{ href: "/" } Brains
 #controls
-  %h4 Window/Level
-  #window-width-slider.slider-control
-  #histogram.control
-  %h4
-    %input.control#enable-threshold{:type=>"checkbox"}
-    %label{:for => "enable-threshold"} Threshold
-  #threshold-div
-    #threshold-slider.slider-control
-    %h4 Threshold Center
-    #threshold-center-slider.slider-control
-  %h4
-    %input.control#enable-threshold2{:type=>"checkbox"}
-    %label{:for => "enable-threshold2"} Second Threshold
-  %div#threshold2-div
-    #threshold2-slider.slider-control
-    %h4 Threshold Center
-    #threshold2-center-slider.slider-control
-  %h4 Opacity (Volume)
-  #opacity-slider.slider-control
-  %h4 Background
-  #background-slider.slider-control
-  %h4 X Depth
-  #x-depth-slider.slider-control.slice-control
-  #x-trim-slider.slider-control.volume-control.hidden
-  %h4 Y Depth
-  #y-depth-slider.slider-control.slice-control
-  #y-trim-slider.slider-control.volume-control.hidden
-  %h4 Z Depth
-  #z-depth-slider.slider-control.slice-control
-  #z-trim-slider.slider-control.volume-control.hidden
-  %h4 Load Local File
-  #load-file.control
-  - if @files.any?
-    %h4 Load Remote File
-    %select#fileselect
-      - @files.each do |f|
-        %option{:value => '/static/nrrd/' + f} #{File::basename f, ".nrrd"}
-    %div
-      %button#load-remote.control Load
-  #status.control.status
-  %button#copyurl Copy URL
+  .control-box
+    %h4 Window/Level
+    #window-width-slider.slider-control
+    #histogram.control
+  .control-box
+    %h4
+      %input.control#enable-threshold{:type=>"checkbox"}
+      %label{:for => "enable-threshold"} Threshold
+    #threshold-div
+      #threshold-slider.slider-control
+      %h4 Threshold Center
+      #threshold-center-slider.slider-control
+  .control-box
+    %h4
+      %input.control#enable-threshold2{:type=>"checkbox"}
+      %label{:for => "enable-threshold2"} Second Threshold
+    %div#threshold2-div
+      #threshold2-slider.slider-control
+      %h4 Threshold Center
+      #threshold2-center-slider.slider-control
+
+  .control-box
+    %h4 Opacity (Volume)
+    #opacity-slider.slider-control
+    %h4 Background
+    #background-slider.slider-control
+  .control-box
+    %h4 X Depth
+    #x-depth-slider.slider-control.slice-control
+    #x-trim-slider.slider-control.volume-control.hidden
+    %h4 Y Depth
+    #y-depth-slider.slider-control.slice-control
+    #y-trim-slider.slider-control.volume-control.hidden
+    %h4 Z Depth
+    #z-depth-slider.slider-control.slice-control
+    #z-trim-slider.slider-control.volume-control.hidden
+  .control-box
+    %h4 Load Local File
+    #load-file.control
+    - if @files.any?
+      %h4 Load Remote File
+      %select#fileselect
+        - @files.each do |f|
+          %option{:value => '/static/nrrd/' + f} #{File::basename f, ".nrrd"}
+      %div
+        %button#load-remote.control Load
+    #status.control.status
+    %button#copyurl Copy URL
 #main
   #webglview
     %canvas#canvas

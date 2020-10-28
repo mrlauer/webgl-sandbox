@@ -12,6 +12,14 @@ body {
     font-family: $defaultFont;
 }
 
+.control-box {
+    padding: 0 0.5em 0.5em 0.5em;
+    border: 1px solid lightgray;
+    display: inline-block;
+    margin-bottom: 0.5em;
+    width: $controlsz - 50px;
+}
+
 h1 {
     font-style: italic;
     font-weight: normal;
@@ -21,6 +29,7 @@ h4 {
     font-style: normal;
     font-weight: normal;
     margin-bottom: 0;
+    margin-top: 0.75em;
 }
 
 a:link {
