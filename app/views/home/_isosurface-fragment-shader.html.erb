@@ -1,0 +1,95 @@
+<% shaderName ||= "shader-fs" %>
+<script id="<%= shaderName %>" type="x-shader/x-fragment">
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    varying vec4 vPosition;
+    varying vec2 vUV;
+    varying vec2 vLocalUV;
+    uniform sampler2D uTextureLow;
+    uniform sampler2D uTextureHigh;
+    uniform sampler2D uNormalX;
+    uniform sampler2D uNormalY;
+    uniform sampler2D uNormalZ;
+    uniform mat3 uNMatrix;
+
+    uniform vec3 uPointLightingLocation;
+    uniform vec3 uPointLightingSpecularColor;
+    uniform vec3 uPointLightingDiffuseColor;
+    uniform float uMaterialShininess;
+
+    uniform vec4 uEmission;
+    uniform vec4 uDiffuse;
+    uniform vec4 uAmbient;
+    uniform vec4 uSpecular;
+    uniform bool uShowSpecularHighlights;
+    uniform vec3 uAmbientColor;
+    
+    uniform bool uMultiple;
+
+    uniform float uMaxLimit;
+    uniform float uThreshold;
+    uniform vec2 uLocalMin;
+    uniform vec2 uLocalMax;
+ 
+    void main(void) {
+        if(uMultiple && 
+           (vLocalUV.s < uLocalMin.s || vLocalUV.s > uLocalMax.s ||
+            vLocalUV.t < uLocalMin.t || vLocalUV.t > uLocalMax.t )) {
+            discard;
+            return;
+        }
+
+        float alpha = 1.0;
+        vec3 low = texture2D(uTextureLow, vUV).rgb;
+        vec3 high = texture2D(uTextureHigh, vUV).rgb;
+        vec3 light = (low * 255.0 + high * (255.0 * 256.0) ) / uMaxLimit;
+
+        const float eps=0.001;
+        float l = light.r;
+        if(l < uThreshold) {
+            discard;
+            return;
+        }
+
+        // Reconstruct the normal
+        float nx = texture2D(uNormalX, vUV).r - 0.5;
+        float ny = texture2D(uNormalY, vUV).r - 0.5;
+        float nz = texture2D(uNormalZ, vUV).r - 0.5;
+        vec3 normal = uNMatrix * normalize(vec3(nx, ny, nz));
+        
+        vec4 emission = uEmission;
+        vec4 diffuse = uDiffuse;
+        vec4 ambient = uAmbient;
+        vec4 specular = uSpecular;
+        
+        alpha = 1.0;
+        
+        vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
+
+        // Hack for now
+        vec4 vColor = vec4(0.0, 0.0, 0.0, 0.0);
+
+        float specularLightWeighting = 0.0;
+        if (uShowSpecularHighlights) {
+            vec3 eyeDirection = normalize(-vPosition.xyz);
+            vec3 reflectionDirection = reflect(-lightDirection, normal);
+
+            specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
+        }
+
+        float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
+        light =
+            emission.rgb + 
+            uAmbientColor * (ambient + vColor).rgb +
+            + uPointLightingSpecularColor * specularLightWeighting * (specular + vColor).rgb 
+            + uPointLightingDiffuseColor * diffuseLightWeighting * (diffuse + vColor).rgb;
+
+        gl_FragColor = vec4(light, alpha);
+        if(gl_FragColor.a == 0.0) {
+            discard;
+        }
+    }
+</script>
+

@@ -167,6 +167,7 @@ $ ->
     $('#canvas').mrlgl
         initialize: ->
             widget = this
+            this.initProgram(null, $('script#isosurface-fs').first())
             this.initProgram()
             this.enableVertexAttribArray("aUV", false)
             this.enableVertexAttribArray("aVertexPosition")
