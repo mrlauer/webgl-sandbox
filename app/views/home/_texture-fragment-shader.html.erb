@@ -38,8 +38,7 @@
 
         float alpha = 1.0;
         vec3 low = texture2D(uTextureLow, vUV).rgb;
-        vec3 high = texture2D(uTextureHigh, vUV).rgb;
-        vec3 light = (low * 255.0 + high * (255.0 * 256.0) ) / uMaxLimit;
+        vec3 light = low * 65535.0 / uMaxLimit;
 
         const float eps=0.001;
         float l = light.r;
