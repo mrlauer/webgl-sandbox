@@ -1,16 +1,16 @@
 <% shaderName ||= "shader-vs" %>
-<script id="<%= shaderName %>" type="x-shader/x-vertex">    
-    attribute vec3 aVertexPosition;
-    attribute vec2 aLocalUV;
-    attribute vec2 aUV;
+<script id="<%= shaderName %>" type="x-shader/x-vertex">#version 300 es   
+    in vec3 aVertexPosition;
+    in vec2 aLocalUV;
+    in vec2 aUV;
  
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
     uniform mat3 uNMatrix;
  
-    varying vec4 vPosition;
-    varying vec2 vUV;
-    varying vec2 vLocalUV;
+    out vec4 vPosition;
+    out vec2 vUV;
+    out vec2 vLocalUV;
  
     void main(void) {
         vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);

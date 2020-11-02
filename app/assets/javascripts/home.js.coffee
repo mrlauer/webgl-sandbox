@@ -185,7 +185,7 @@ $ ->
 
             @slicesOn = true
             @volumeOn = false
-            @interpolateTextures = false
+            @interpolateTextures = true
             @slices = []
 
             @rainbowTexture = ColorUtilities.makeRainbowTexture(@gl)
