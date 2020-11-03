@@ -5,12 +5,12 @@
     #endif
 
     in vec4 vPosition;
-    in vec2 vUV;
-    in vec2 vLocalUV;
+    in vec3 vUV;
+    in vec3 vLocalUV;
 
     out vec4 FragColor;
 
-    uniform sampler2D uTextureLow;
+    uniform lowp sampler3D uTextureLow;
     uniform sampler2D uRainbowTexture;
 
     uniform bool uRainbow;

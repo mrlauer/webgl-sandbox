@@ -322,8 +322,8 @@ $ ->
     # Represents a SINGLE texture, which may be an array of slices
     # A slice object may have many of them
     class TextureObject
-        _rowsz : 8
-        _maxDepth : 32
+        _rowsz : 1
+        _maxDepth : 64
 
         constructor : ->
 
@@ -337,12 +337,11 @@ $ ->
 
         getUVOffsets : (d) ->
             depth = @depth
-            [nrows, rowlen] = @_textureLayout()
             # nudge the bounds to the middle of the first and last pixels, so that there
             # won't be any interpolation from the adjacent patches
-            ufudge = 0.5 / (@width * rowlen)
-            vfudge = 0.5 / (@height * nrows)
-            dx = d % rowlen
+            ufudge = 0.5 / (@width)
+            vfudge = 0.5 / (@height)
+            dx = d
             dy = Math.floor(d / rowlen)
             delx = 1 / rowlen
             dely = 1 / Math.ceil(depth/rowlen)
@@ -409,14 +408,15 @@ $ ->
 
             makeTexture = (pixels) =>
                 texture = gl.createTexture()
-                gl.bindTexture gl.TEXTURE_2D, texture
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, textureData.width * rowlen, textureData.height * nrows, 0,
+                gl.bindTexture gl.TEXTURE_3D, texture
+                gl.texImage3D(gl.TEXTURE_3D, 0, gl.R32F, textureData.width, textureData.height, textureData.depth, 0,
                     gl.RED, gl.FLOAT, pixels)
                 interp = widget.getTextureInterpolation()
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, interp)
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, interp)
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+                gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, interp)
+                gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, interp)
+                gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
+                gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+                gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
                 return texture
             obj = new TextureObject
             for p in ['bits', 'height', 'width', 'depth']
@@ -432,7 +432,7 @@ $ ->
             gl = widget.gl
             widget.uniform1i lowvar, 0
             gl.activeTexture gl.TEXTURE0
-            gl.bindTexture(gl.TEXTURE_2D, @texture)
+            gl.bindTexture(gl.TEXTURE_3D, @texture)
 
     class SliceObject
         constructor : (@textures) ->
@@ -482,24 +482,29 @@ $ ->
                         bds.left, bds.top, z,
                         bds.right, bds.top, z
                     )
-                    [u0, v0, u1, v1] = texture.getUVOffsets i
+                    # [u0, v0, u1, v1] = texture.getUVOffsets i
+                    d = i / (texture.depth-1)
+                    # This is no longer necessary and really it's wrong - 
+                    # consistency with old hack when textures were 2d
+                    ufudge = 0.5 / (texture.width)
+                    vfudge = 0.5 / (texture.height)
                     uvs.push(
-                        u0, v0
-                        u1, v0,
-                        u0, v1,
-                        u1, v1
+                        ufudge, vfudge, d,
+                        1-ufudge, vfudge, d,
+                        ufudge, 1-vfudge, d,
+                        1-ufudge, 1-vfudge, d
                     )
                     localuvs.push(
-                        0, 0,
-                        1, 0,
-                        0, 1,
-                        1, 1
+                        0, 0, d,
+                        1, 0, d,
+                        0, 1, d,
+                        1, 1, d
                     )
                     thisIdx++
 
                 widget.setFloatBufferData positionBuffer, vertices, 3
-                widget.setFloatBufferData uvBuffer, uvs, 2
-                widget.setFloatBufferData localUvBuffer, localuvs, 2
+                widget.setFloatBufferData uvBuffer, uvs, 3
+                widget.setFloatBufferData localUvBuffer, localuvs, 3
                 texture.positionBuffer = positionBuffer
                 texture.uvBuffer = uvBuffer
                 texture.localUvBuffer = localUvBuffer
@@ -872,10 +877,10 @@ $ ->
             for slice in widget.slices
                 for texture in slice.textures
                     gl = widget.gl
-                    gl.bindTexture gl.TEXTURE_2D, texture.texture
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, interp)
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, interp)
-                    gl.bindTexture gl.TEXTURE_2D, null
+                    gl.bindTexture gl.TEXTURE_3D, texture.texture
+                    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, interp)
+                    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, interp)
+                    gl.bindTexture gl.TEXTURE_3D, null
             widget.draw()
 
     viewMouse = ->
