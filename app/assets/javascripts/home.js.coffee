@@ -360,7 +360,9 @@ $ ->
                 depth = @_maxDepth
             [nrows, rowlen] = @_textureLayout { depth: depth }
             sz = width * height * nrows * rowlen
-            pixels = new Float32Array sz
+            pixels = new Uint8Array sz
+            pixelsHigh = new Uint8Array sz
+
             maxValue = reader.max ? 255
             
             [s0, s1, s2] = unswizzle [0, 1, 2]
@@ -382,7 +384,8 @@ $ ->
                         if p < 0 then p = 0
                         if p > maxValue then maxValue = p
                         pixelIdx = baseIdx + j
-                        pixels[pixelIdx] = p / 65535
+                        pixels[pixelIdx] = p
+                        pixelsHigh[pixelIdx] = p >> 8
             bits = 8
             for b in [8 ... 16]
                 if (1 << b) > maxValue
@@ -397,20 +400,19 @@ $ ->
                 height : height,
                 depth : depth,
                 vectors : vec3.create(v) for v in vectors
-                pixels : pixels
+                pixels : pixels,
+                pixelsHigh : pixelsHigh
             }
 
         makeTexture2dFromData : (widget, textureData) ->
             gl = widget.gl
             [nrows, rowlen] = @_textureLayout textureData
-            gl.getExtension('OES_texture_float_linear');
-
 
             makeTexture = (pixels) =>
                 texture = gl.createTexture()
                 gl.bindTexture gl.TEXTURE_3D, texture
-                gl.texImage3D(gl.TEXTURE_3D, 0, gl.R32F, textureData.width, textureData.height, textureData.depth, 0,
-                    gl.RED, gl.FLOAT, pixels)
+                gl.texImage3D(gl.TEXTURE_3D, 0, gl.LUMINANCE, textureData.width, textureData.height, textureData.depth, 0,
+                    gl.LUMINANCE, gl.UNSIGNED_BYTE, pixels)
                 interp = widget.getTextureInterpolation()
                 gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, interp)
                 gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, interp)
@@ -423,6 +425,9 @@ $ ->
                 obj[p] = textureData[p]
             gl.activeTexture gl.TEXTURE0
             obj.texture = makeTexture textureData.pixels
+            gl.activeTexture gl.TEXTURE1
+            obj.textureHigh = makeTexture textureData.pixelsHigh
+
             return obj
 
         getMaxLimit : ->
@@ -433,6 +438,11 @@ $ ->
             widget.uniform1i lowvar, 0
             gl.activeTexture gl.TEXTURE0
             gl.bindTexture(gl.TEXTURE_3D, @texture)
+            if highvar?
+                widget.uniform1i highvar, 1
+                gl.activeTexture gl.TEXTURE1
+                gl.bindTexture gl.TEXTURE_3D, @textureHigh
+
 
     class SliceObject
         constructor : (@textures) ->
@@ -573,7 +583,7 @@ $ ->
                 widget.setFloatAttribPointer 'aLocalUV', texture.localUvBuffer
 
                 widget.uniform1f 'uMaxLimit', @max
-                texture.setTextureUniforms widget, 'uTextureLow'
+                texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
 
                 offset = 2 * 6 * (if rev then (texture.depth - tLast - 1) else tFirst)
                 nVerts = 6 * (Math.abs(tLast - tFirst) + 1)
@@ -876,6 +886,9 @@ $ ->
                 for texture in slice.textures
                     gl = widget.gl
                     gl.bindTexture gl.TEXTURE_3D, texture.texture
+                    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, interp)
+                    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, interp)
+                    gl.bindTexture gl.TEXTURE_3D, texture.textureHigh
                     gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, interp)
                     gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, interp)
                     gl.bindTexture gl.TEXTURE_3D, null
