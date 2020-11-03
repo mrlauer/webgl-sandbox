@@ -411,6 +411,15 @@ $ ->
             makeTexture = (pixels) =>
                 texture = gl.createTexture()
                 gl.bindTexture gl.TEXTURE_3D, texture
+
+                # width has to be aligned.
+                if textureData.width % 2
+                    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1)
+                else if textureData.width % 4
+                    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 2)
+                else
+                    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 2)
+
                 gl.texImage3D(gl.TEXTURE_3D, 0, gl.LUMINANCE, textureData.width, textureData.height, textureData.depth, 0,
                     gl.LUMINANCE, gl.UNSIGNED_BYTE, pixels)
                 interp = widget.getTextureInterpolation()
@@ -469,12 +478,10 @@ $ ->
                 maxd = Math.max maxd, texture.depth
                 positionBuffer = gl.createBuffer()
                 uvBuffer = gl.createBuffer()
-                localUvBuffer = gl.createBuffer()
                 indexBuffer = gl.createBuffer()
                 indexRevBuffer = gl.createBuffer()
                 vertices = []
                 uvs = []
-                localuvs = []
                 indices = []
 
                 bds =
@@ -502,20 +509,12 @@ $ ->
                         ufudge, 1-vfudge, d,
                         1-ufudge, 1-vfudge, d
                     )
-                    localuvs.push(
-                        0, 0, d,
-                        1, 0, d,
-                        0, 1, d,
-                        1, 1, d
-                    )
                     thisIdx++
 
                 widget.setFloatBufferData positionBuffer, vertices, 3
                 widget.setFloatBufferData uvBuffer, uvs, 3
-                widget.setFloatBufferData localUvBuffer, localuvs, 3
                 texture.positionBuffer = positionBuffer
                 texture.uvBuffer = uvBuffer
-                texture.localUvBuffer = localUvBuffer
                 texture.indexBuffer = indexBuffer
                 texture.indexRevBuffer = indexRevBuffer
 
@@ -580,7 +579,6 @@ $ ->
 
                 widget.setFloatAttribPointer 'aVertexPosition', texture.positionBuffer
                 widget.setFloatAttribPointer 'aUV', texture.uvBuffer
-                widget.setFloatAttribPointer 'aLocalUV', texture.localUvBuffer
 
                 widget.uniform1f 'uMaxLimit', @max
                 texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'

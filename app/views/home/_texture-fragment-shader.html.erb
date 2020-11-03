@@ -6,7 +6,6 @@
 
     in vec4 vPosition;
     in vec3 vUV;
-    in vec3 vLocalUV;
 
     out vec4 FragColor;
 
@@ -33,8 +32,8 @@
  
     void main(void) {
         if(uMultiple && 
-           (vLocalUV.s < uLocalMin.s || vLocalUV.s > uLocalMax.s ||
-            vLocalUV.t < uLocalMin.t || vLocalUV.t > uLocalMax.t )) {
+           (vUV.s < uLocalMin.s || vUV.s > uLocalMax.s ||
+            vUV.t < uLocalMin.t || vUV.t > uLocalMax.t )) {
             discard;
             return;
         }
