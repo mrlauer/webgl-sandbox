@@ -3,6 +3,7 @@
 - content_for :shaders do
   = render :partial => 'texture-vertex-shader'
   = render :partial => 'texture-fragment-shader', :locals => { :dimension => 2 }
+  = render :partial => 'isosurface-fragment-shader', :locals => { :shaderName => "isosurface-fs" }
 %div.header
   %h1
     %a{ href: "/" } Brains

@@ -167,7 +167,8 @@ $ ->
     $('#canvas').mrlgl
         initialize: ->
             widget = this
-            this.initProgram()
+            @isosurfShader = this.initProgram(null, $('script#isosurface-fs').first())
+            @sliceShader = this.initProgram()
             this.enableVertexAttribArray("aUV", false)
             this.enableVertexAttribArray("aVertexPosition")
             this.gl.clearColor 0.75, 0.75, 0.75, 1
@@ -386,6 +387,7 @@ $ ->
                         pixelIdx = baseIdx + j
                         pixels[pixelIdx] = p
                         pixelsHigh[pixelIdx] = p >> 8
+
             bits = 8
             for b in [8 ... 16]
                 if (1 << b) > maxValue
