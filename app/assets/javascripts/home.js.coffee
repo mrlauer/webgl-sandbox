@@ -482,10 +482,8 @@ $ ->
                         bds.left, bds.top, z,
                         bds.right, bds.top, z
                     )
-                    # [u0, v0, u1, v1] = texture.getUVOffsets i
-                    d = i / (texture.depth-1)
-                    # This is no longer necessary and really it's wrong - 
-                    # consistency with old hack when textures were 2d
+                    # uvw are at pixel centers
+                    d = (i + 0.5) / (texture.depth)
                     ufudge = 0.5 / (texture.width)
                     vfudge = 0.5 / (texture.height)
                     uvs.push(
