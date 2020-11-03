@@ -94,8 +94,12 @@ $ ->
         mat4.identity this.pMatrix
         this.controller.camera.setMatrices this
 
+        if @surfacesOn
+            @useProgram @isosurfShader
+        else
+            @useProgram @sliceShader
+
         this.setupShader = ->
-            shaderProgram = this.shaderProgram
             this.setUniformMatrices('uMVMatrix', 'uPMatrix', 'uNMatrix')
 
         this.setupShader()
@@ -113,7 +117,7 @@ $ ->
             for slice in @slices
                 slice.draw this
 
-        if @volumeOn
+        if @volumeOn or @surfacesOn
             if @slices
                 widget.uniform1i 'uMultiple', 1
                 # figure out which set to draw, and which order to draw in
@@ -151,6 +155,7 @@ $ ->
                         [first, last] = [last, first]
                     bestSlice.draw this, first, last
 
+
     # set the bounds for the i'th coordinate
     setLimits = (idx, low, high) ->
         self = this
@@ -184,8 +189,9 @@ $ ->
             @yLimits = [0, 1]
             @zLimits = [0, 1]
 
-            @slicesOn = true
-            @volumeOn = false
+            @slicesOn = false
+            @volumeOn = true
+            @surfacesOn = false
             @interpolateTextures = true
             @slices = []
 
@@ -859,9 +865,9 @@ $ ->
     )
     $('#viewType').controlgroup().on 'change', 'input', (e)->
         val = $(this).val()
-        widget[a] = false for a in ['slicesOn', 'volumeOn']
+        widget[a] = false for a in ['slicesOn', 'volumeOn', 'surfacesOn']
         widget[val + "On"] = $(this).is(':checked')
-        $('.volume-control').toggleClass('hidden', !widget.volumeOn)
+        $('.volume-control').toggleClass('hidden', !widget.volumeOn | !widget.surfacesOn)
         $('.slice-control').toggleClass('hidden', !widget.slicesOn)
         widget.draw()
     # let's start with volume on: fake a click

@@ -27,7 +27,8 @@
     uniform bool uMultiple;
 
     uniform float uMaxLimit;
-    uniform float uThreshold;
+    uniform float uMaxThreshold;
+    uniform float uMinThreshold;
     uniform vec2 uLocalMin;
     uniform vec2 uLocalMax;
  
@@ -46,7 +47,7 @@
 
         const float eps=0.001;
         float l = light.r;
-        if(l < uThreshold) {
+        if(l < uMinThreshold) {
             discard;
             return;
         }
@@ -81,6 +82,8 @@
             + uPointLightingSpecularColor * specularLightWeighting * (specular + vColor).rgb 
             + uPointLightingDiffuseColor * diffuseLightWeighting * (diffuse + vColor).rgb;
 
+        // temporary!
+        light = vec3(1, 1, 1);
         FragColor = vec4(light, alpha);
         if(FragColor.a == 0.0) {
             discard;
