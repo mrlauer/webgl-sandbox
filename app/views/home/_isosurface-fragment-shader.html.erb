@@ -39,6 +39,24 @@
         vec3 light = (low * 255.0 + high * (255.0 * 256.0) ) / uMaxLimit;
         return light;
     }
+
+    bool outOfBounds(vec3 test) {
+        return test.s > 1.0 || test.s < 0.0 ||
+               test.t > 1.0 || test.t < 0.0 ||
+               test.p > 1.0 || test.p < 0.0;
+    }
+
+    float gradient(vec3 uvw, vec3 basis) {
+        vec3 uvp = uvw + basis;
+        vec3 uvm = uvw - basis;
+        if (outOfBounds(uvp)) {
+            return (getDensity(uvw) - getDensity(uvm)).r * 2.0;
+        } else if (outOfBounds(uvm)) {
+            return (getDensity(uvp) - getDensity(uvw)).r * 2.0;
+        } else {
+            return (getDensity(uvp) - getDensity(uvm)).r;
+        }
+    }
  
     void main(void) {
         if(uMultiple && 
@@ -59,9 +77,9 @@
         }
 
         // Reconstruct the normal
-        float nX = (getDensity(vUV + uBasisX) - getDensity(vUV - uBasisX)).r;
-        float nY = (getDensity(vUV + uBasisY) - getDensity(vUV - uBasisY)).r;
-        float nZ = (getDensity(vUV + uBasisZ) - getDensity(vUV - uBasisZ)).r;
+        float nX = gradient(vUV, uBasisX);
+        float nY = gradient(vUV, uBasisY);
+        float nZ = gradient(vUV, uBasisZ);
         vec3 normal = normalize(uNMatrix * vec3(nX, nY, nZ));
         
         vec4 emission = uEmission;
