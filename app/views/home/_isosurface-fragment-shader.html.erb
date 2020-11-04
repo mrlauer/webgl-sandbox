@@ -9,6 +9,7 @@
     uniform lowp sampler3D uTextureLow;
     uniform lowp sampler3D uTextureHigh;
     uniform mat3 uNMatrix;
+    uniform vec3 uBasisX, uBasisY, uBasisZ;
 
     out vec4 FragColor;
 
@@ -31,6 +32,13 @@
     uniform float uMinThreshold;
     uniform vec2 uLocalMin;
     uniform vec2 uLocalMax;
+
+    vec3 getDensity(vec3 uvw) {
+        vec3 low = texture(uTextureLow, uvw).rgb;
+        vec3 high = texture(uTextureHigh, uvw).rgb;
+        vec3 light = (low * 255.0 + high * (255.0 * 256.0) ) / uMaxLimit;
+        return light;
+    }
  
     void main(void) {
         if(uMultiple && 
@@ -41,19 +49,20 @@
         }
 
         float alpha = 1.0;
-        vec3 low = texture(uTextureLow, vUV).rgb;
-        vec3 high = texture(uTextureHigh, vUV).rgb;
-        vec3 light = (low * 255.0 + high * (255.0 * 256.0) ) / uMaxLimit;
+        vec3 light = getDensity(vUV);
 
         const float eps=0.001;
         float l = light.r;
-        if(l < uMinThreshold) {
+        if(l < uMinThreshold || l > uMaxThreshold) {
             discard;
             return;
         }
 
         // Reconstruct the normal
-        vec3 normal = uNMatrix * vec3(0, 0, 1);
+        float nX = (getDensity(vUV + uBasisX) - getDensity(vUV - uBasisX)).r;
+        float nY = (getDensity(vUV + uBasisY) - getDensity(vUV - uBasisY)).r;
+        float nZ = (getDensity(vUV + uBasisZ) - getDensity(vUV - uBasisZ)).r;
+        vec3 normal = normalize(uNMatrix * vec3(nX, nY, nZ));
         
         vec4 emission = uEmission;
         vec4 diffuse = uDiffuse;
@@ -65,25 +74,25 @@
         vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
 
         // Hack for now
-        vec4 vColor = vec4(0.0, 0.0, 0.0, 0.0);
+        vec4 vColor = vec4(0.0, 0.0, 0.0, 1.0);
 
         float specularLightWeighting = 0.0;
-        if (uShowSpecularHighlights) {
+        if (true || uShowSpecularHighlights) {
             vec3 eyeDirection = normalize(-vPosition.xyz);
             vec3 reflectionDirection = reflect(-lightDirection, normal);
 
             specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
         }
 
-        float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
+        float diffuseLightWeighting = abs(dot(normal, lightDirection));
         light =
             emission.rgb + 
-            uAmbientColor * (ambient + vColor).rgb +
+            uAmbientColor * ambient.rgb +
             + uPointLightingSpecularColor * specularLightWeighting * (specular + vColor).rgb 
             + uPointLightingDiffuseColor * diffuseLightWeighting * (diffuse + vColor).rgb;
 
         // temporary!
-        light = vec3(1, 1, 1);
+        // light = vec3(1, 1, 1);
         FragColor = vec4(light, alpha);
         if(FragColor.a == 0.0) {
             discard;

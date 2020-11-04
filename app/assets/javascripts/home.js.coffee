@@ -104,6 +104,19 @@ $ ->
 
         this.setupShader()
 
+        if @surfacesOn
+            #Bogus test values
+            widget.uniform3f 'uPointLightingLocation', -10, -10, 10
+            widget.uniform3f 'uPointLightingDiffuseColor', 1, 1, 1
+            widget.uniform3f 'uPointLightingSpecularColor', 1, 1, 1
+            widget.uniform3fv 'uAmbientColor', [1, 1, 1]
+            widget.uniform1i 'uShowSpecularHighlights', true
+            widget.uniform1f 'uMaterialShininess', 8
+            # widget.uniform4fv 'uEmission', [.1, .1, .5, 1]
+            widget.uniform4fv 'uAmbient', [.1, .1, .1, 1]
+            widget.uniform4fv 'uDiffuse', [.5, .5, .5, 1]
+            widget.uniform4f 'uSpecular', 1, 1, 1, 1
+
         if @rainbow and @rainbowTexture
             widget.uniform1i 'uRainbow', 1
             widget.uniform1i 'uRainbowTexture', 2
@@ -585,6 +598,16 @@ $ ->
                     @createBuffers widget
                 gl.bindBuffer gl.ELEMENT_ARRAY_BUFFER, (if rev then texture.indexRevBuffer else texture.indexBuffer)
 
+                # basis vectors
+                basis = [
+                    [ 1/texture.width, 0, 0],
+                    [ 0, 1/texture.height, 0],
+                    [ 0, 0, 1/texture.depth]
+                ]
+                widget.uniform3fv 'uBasisX', basis[0]
+                widget.uniform3fv 'uBasisY', basis[1]
+                widget.uniform3fv 'uBasisZ', basis[2]
+
                 widget.setFloatAttribPointer 'aVertexPosition', texture.positionBuffer
                 widget.setFloatAttribPointer 'aUV', texture.uvBuffer
 
@@ -662,6 +685,8 @@ $ ->
                 slice = new SliceObject textures
                 slice.scale = (swizzle scales)[2] / minScale
                 slice.max = reader.max
+                slice.swizzle = swizzle
+                slice.unswizzle = unswizzle
                 #yuck
                 vectors = ((vec3.scale reader.vectors[i], reader.sizes[i], vec3.create()) for i in [0..2])
                 vectors = swizzle vectors
@@ -867,7 +892,7 @@ $ ->
         val = $(this).val()
         widget[a] = false for a in ['slicesOn', 'volumeOn', 'surfacesOn']
         widget[val + "On"] = $(this).is(':checked')
-        $('.volume-control').toggleClass('hidden', !widget.volumeOn | !widget.surfacesOn)
+        $('.volume-control').toggleClass('hidden', !widget.volumeOn && !widget.surfacesOn)
         $('.slice-control').toggleClass('hidden', !widget.slicesOn)
         widget.draw()
     # let's start with volume on: fake a click
