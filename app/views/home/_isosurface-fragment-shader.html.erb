@@ -36,8 +36,8 @@
     uniform float uMin;
     uniform float uMaxThreshold;
     uniform float uMinThreshold;
-    uniform vec2 uLocalMin;
-    uniform vec2 uLocalMax;
+    uniform vec3 uLocalMin;
+    uniform vec3 uLocalMax;
 
     vec3 getDensity(vec3 uvw) {
         vec3 low = texture(uTextureLow, uvw).rgb;
@@ -83,10 +83,20 @@
         }
 
         // Reconstruct the normal
-        float nX = gradient(vUV, uBasisX);
-        float nY = gradient(vUV, uBasisY);
-        float nZ = gradient(vUV, uBasisZ);
-        vec3 normal = normalize(uNMatrix * vec3(nX, nY, nZ));
+        vec3 rawNormal;
+        if (vUV.s - uBasisX.s < uLocalMin.s || vUV.s + uBasisX.s > uLocalMax.s) {
+            rawNormal = vec3(1, 0, 0);
+        } else if (vUV.t - uBasisY.t < uLocalMin.t || vUV.t + uBasisY.t > uLocalMax.t) {
+            rawNormal = vec3(0, 1, 0);
+        } else if (vUV.p - uBasisZ.p < uLocalMin.p || vUV.p + uBasisZ.p > uLocalMax.p) {
+            rawNormal = vec3(0, 0, 1);
+        } else {
+            float nX = gradient(vUV, uBasisX);
+            float nY = gradient(vUV, uBasisY);
+            float nZ = gradient(vUV, uBasisZ);
+            rawNormal = vec3(nX, nY, nZ);
+        }
+        vec3 normal = normalize(uNMatrix * rawNormal);
         
         vec4 emission = uEmission;
         vec4 diffuse = uDiffuse;
@@ -114,7 +124,7 @@
             vec3 eyeDirection = normalize(-vPosition.xyz);
             vec3 reflectionDirection = reflect(-lightDirection, normal);
 
-            specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
+            specularLightWeighting = pow(abs(dot(reflectionDirection, eyeDirection)), uMaterialShininess);
         }
 
         float diffuseLightWeighting = abs(dot(normal, lightDirection));

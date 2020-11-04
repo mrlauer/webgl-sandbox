@@ -583,15 +583,14 @@ $ ->
             widget.uniform1f('uMaxThreshold2', widget.maxthreshold2)
             widget.uniform1i 'uEnableThreshold2', widget.enableThreshold2
 
-            widget.uniform2f 'uLocalMin', @bounds[0][0], @bounds[1][0]
-            widget.uniform2f 'uLocalMax', @bounds[0][1], @bounds[1][1]
-
             rev = (last < first)
 
             for idx in [tstart .. tstop]
                 texture = @textures[idx]
                 tFirst = Math.max(min - texture.startIdx, 0)
                 tLast = Math.min(max - texture.startIdx, texture.depth - 1)
+                zMin = (min - texture.startIdx) / (texture.depth - 1);
+                zMax = (max - texture.startIdx) / (texture.depth - 1);
                 if (tLast < tFirst)
                     continue
                 if !texture.positionBuffer
@@ -610,6 +609,9 @@ $ ->
 
                 widget.setFloatAttribPointer 'aVertexPosition', texture.positionBuffer
                 widget.setFloatAttribPointer 'aUV', texture.uvBuffer
+
+                widget.uniform3f 'uLocalMin', @bounds[0][0], @bounds[1][0], zMin
+                widget.uniform3f 'uLocalMax', @bounds[0][1], @bounds[1][1], zMax
 
                 widget.uniform1f 'uMaxLimit', @max
                 texture.setTextureUniforms widget, 'uTextureLow', 'uTextureHigh'
