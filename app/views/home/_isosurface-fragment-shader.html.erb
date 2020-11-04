@@ -8,6 +8,10 @@
     in vec3 vUV;
     uniform lowp sampler3D uTextureLow;
     uniform lowp sampler3D uTextureHigh;
+    uniform sampler2D uRainbowTexture;
+
+    uniform bool uRainbow;
+
     uniform mat3 uNMatrix;
     uniform vec3 uBasisX, uBasisY, uBasisZ;
 
@@ -28,6 +32,8 @@
     uniform bool uMultiple;
 
     uniform float uMaxLimit;
+    uniform float uMax;
+    uniform float uMin;
     uniform float uMaxThreshold;
     uniform float uMinThreshold;
     uniform vec2 uLocalMin;
@@ -86,6 +92,15 @@
         vec4 diffuse = uDiffuse;
         vec4 ambient = uAmbient;
         vec4 specular = uSpecular;
+
+        if(uRainbow) {
+            float fac = uMax - uMin;
+            float l2 = (light.r - uMin) / fac;
+            vec4 color = vec4(texture(uRainbowTexture, vec2(l2, 0)).rgb, 1);
+            emission = 0.5 * color;
+            //diffuse = 0.5 * color;
+            //ambient = 0.5 * color;
+        }
         
         alpha = 1.0;
         
