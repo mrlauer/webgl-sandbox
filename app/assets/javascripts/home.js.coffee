@@ -108,10 +108,10 @@ $ ->
             #Bogus test values
             widget.uniform3f 'uPointLightingLocation', -10, -10, 10
             widget.uniform3f 'uPointLightingDiffuseColor', 1, 1, 1
-            widget.uniform3f 'uPointLightingSpecularColor', 1, 1, 1
+            widget.uniform3f 'uPointLightingSpecularColor', 0.5, 0.5, 0.5
             widget.uniform3fv 'uAmbientColor', [1, 1, 1]
             widget.uniform1i 'uShowSpecularHighlights', true
-            widget.uniform1f 'uMaterialShininess', 8
+            widget.uniform1f 'uMaterialShininess', 32
             # widget.uniform4fv 'uEmission', [.1, .1, .5, 1]
             widget.uniform4fv 'uAmbient', [.1, .1, .1, 1]
             widget.uniform4fv 'uDiffuse', [.5, .5, .5, 1]

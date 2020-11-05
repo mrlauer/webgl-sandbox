@@ -46,21 +46,15 @@
         return light;
     }
 
-    bool outOfBounds(vec3 test) {
-        return test.s > 1.0 || test.s < 0.0 ||
-               test.t > 1.0 || test.t < 0.0 ||
-               test.p > 1.0 || test.p < 0.0;
-    }
-
-    float gradient(vec3 uvw, vec3 basis) {
+    float gradient(vec3 uvw, vec3 basis, int i) {
         vec3 uvp = uvw + basis;
         vec3 uvm = uvw - basis;
-        if (outOfBounds(uvp)) {
-            return (getDensity(uvw) - getDensity(uvm)).r * 2.0;
-        } else if (outOfBounds(uvm)) {
-            return (getDensity(uvp) - getDensity(uvw)).r * 2.0;
+        if (uvp[i] > 1.0) {
+            return (getDensity(uvw).r - getDensity(uvm).r) * 2.0;
+        } else if (uvm[i] < 0.0) {
+            return (getDensity(uvp)[0] - getDensity(uvw).r) * 2.0;
         } else {
-            return (getDensity(uvp) - getDensity(uvm)).r;
+            return (getDensity(uvp).r - getDensity(uvm).r);
         }
     }
  
@@ -91,9 +85,9 @@
         } else if (vUV.p - uBasisZ.p < uLocalMin.p || vUV.p + uBasisZ.p > uLocalMax.p) {
             rawNormal = vec3(0, 0, 1);
         } else {
-            float nX = gradient(vUV, uBasisX);
-            float nY = gradient(vUV, uBasisY);
-            float nZ = gradient(vUV, uBasisZ);
+            float nX = gradient(vUV, uBasisX, 0);
+            float nY = gradient(vUV, uBasisY, 1);
+            float nZ = gradient(vUV, uBasisZ, 2);
             rawNormal = vec3(nX, nY, nZ);
         }
         vec3 normal = normalize(uNMatrix * rawNormal);
@@ -108,19 +102,14 @@
             float l2 = (light.r - uMin) / fac;
             vec4 color = vec4(texture(uRainbowTexture, vec2(l2, 0)).rgb, 1);
             emission = 0.5 * color;
-            //diffuse = 0.5 * color;
-            //ambient = 0.5 * color;
         }
         
         alpha = 1.0;
         
         vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
 
-        // Hack for now
-        vec4 vColor = vec4(0.0, 0.0, 0.0, 1.0);
-
         float specularLightWeighting = 0.0;
-        if (true || uShowSpecularHighlights) {
+        if (uShowSpecularHighlights) {
             vec3 eyeDirection = normalize(-vPosition.xyz);
             vec3 reflectionDirection = reflect(-lightDirection, normal);
 
@@ -131,11 +120,9 @@
         light =
             emission.rgb + 
             uAmbientColor * ambient.rgb +
-            + uPointLightingSpecularColor * specularLightWeighting * (specular + vColor).rgb 
-            + uPointLightingDiffuseColor * diffuseLightWeighting * (diffuse + vColor).rgb;
+            + uPointLightingSpecularColor * specularLightWeighting * (specular).rgb
+            + uPointLightingDiffuseColor * diffuseLightWeighting * (diffuse).rgb;
 
-        // temporary!
-        // light = vec3(1, 1, 1);
         FragColor = vec4(light, alpha);
         if(FragColor.a == 0.0) {
             discard;
